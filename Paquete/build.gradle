@@ -26,6 +26,11 @@ dependencies {
 
 }
 
+application {
+    mainClass = 'org.example.Main'
+}
+
+
 test {
     useJUnitPlatform()
 }
