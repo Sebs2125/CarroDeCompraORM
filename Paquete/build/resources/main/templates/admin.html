@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Admin</title>
+</head>
+
+<body>
+
+    <h1>Panel Admin</h1>
+
+    <form action="/admin/productos" method="post">
+        Nombre: <input name="nombre">
+        Precio: <input name="precio">
+        Inventario: <input name="inventario">
+        <button type="submit">Crear</button>
+    </form>
+
+    <hr>
+
+    <div th:each="p : ${productos}">
+        <p th:text="${p.nombre}"></p>
+    </div>
+
+</body>
+
+</html>
