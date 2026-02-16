@@ -40,4 +40,38 @@ public class CarritoDeCompra
         this.listaProductos = listaProductos;
     }
 
+    public void agregarProducto(Producto producto)
+    {
+        this.listaProductos.add(producto);
+    }
+
+    public int getCantidadProductos()
+    {
+        return this.listaProductos.size();
+    }
+
+    public Double getTotal()
+    {
+        double total = 0.0;
+
+        for ( Producto producto : this.listaProductos )
+        {
+            total += producto.getPrecio();
+        }
+
+        return total;
+
+    }
+
+    public void limpiar()
+    {
+        this.listaProductos.clear();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "CarroDeCompra{" + "id=" + id + ", cantidadDeProductos=" + getCantidadProductos() + ", total=" + getTotal() + '}';
+    }
+
 }

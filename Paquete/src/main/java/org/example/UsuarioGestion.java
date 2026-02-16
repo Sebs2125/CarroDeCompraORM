@@ -8,7 +8,7 @@ import static java.util.spi.ToolProvider.findFirst;
 
 public class UsuarioGestion
 {
-    private static UsuarioGestion usuarioGestion;
+    private static UsuarioGestion instance;
     private List<Usuario> usuarios;
 
     private UsuarioGestion()
@@ -21,12 +21,12 @@ public class UsuarioGestion
 
     public static UsuarioGestion getInstance() //Instancia para gestionar a los usuarios registrados
     {
-        if ( getInstance() == null )
+        if ( instance == null )
         {
-            getInstance() = new UsuarioGestion(); //revisar
+            instance = new UsuarioGestion();
         }
 
-        return getInstance();
+       return instance;
 
     }
 
