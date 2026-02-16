@@ -47,8 +47,9 @@ public class Main {
             ctx.result("Pagina no encontrada - 404");
         });
 
-        app.error(500, ctx -> {
-            ctx.result("Errpr del servidor - 500");
+        app.exception(Exception.class, (e, ctx) -> {
+            ctx.status(500).result("Error del servidor - 500");
+            e.printStackTrace();
         });
 
         System.out.println("Usuarios cargados: " + usuarioGestion.todosLosUsuarios().size());

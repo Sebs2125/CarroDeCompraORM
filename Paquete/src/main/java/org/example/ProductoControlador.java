@@ -25,7 +25,7 @@ public class ProductoControlador {
             modelo.put("cantidadCarro", 0);
         }
 
-        ctx.render("productos.html", modelo);
+        ctx.render("/templates/productos.html", modelo);
 
     }
 
@@ -43,7 +43,7 @@ public class ProductoControlador {
         Map<String, Object> modelo = new HashMap<>();
         modelo.put("productos", productoGestion.getListaProductos());
         modelo.put("usuario", usuarioActual);
-        ctx.render("admin.html", modelo);
+        ctx.render("/templates/admin.html", modelo);
 
     }
 
@@ -58,8 +58,8 @@ public class ProductoControlador {
 
         try {
             String nombre = ctx.formParam("nombre");
-            Double precio = new Double(ctx.formParam("precio"));
-            int inventario = new Integer(ctx.formParam("inventario"));
+            Double precio = Double.valueOf(ctx.formParam("precio"));
+            int inventario = Integer.parseInt(ctx.formParam("inventario"));
 
             Producto producto = new Producto(nombre, precio, inventario);
             productoGestion.addProducto(producto);
@@ -85,7 +85,7 @@ public class ProductoControlador {
         try {
             int id = Integer.parseInt(ctx.formParam("id"));
             String nombre = ctx.formParam("nombre");
-            Double precio = new Double(ctx.formParam("precio"));
+            Double precio = Double.valueOf(ctx.formParam("precio"));
             int inventario = Integer.parseInt(ctx.formParam("inventario"));
 
             Producto producto = new Producto(nombre, precio, inventario);
