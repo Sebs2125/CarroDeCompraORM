@@ -9,7 +9,7 @@ public class ProductoControlador
 {
     private ProductoGestion productoGestion = ProductoGestion.getInstance();
 
-    public void mostrarProducto( Context ctx ) //Punto #4: Los usuarios no autenticados tendrán acceso a la lista de productos.
+    public void mostrarProducto( Context ctx ) //Punto #4: Los usuarios no autenticados no tendrán acceso a la lista de productos.
     {
         Map<String, Object> modelo = new HashMap<>();
         modelo.put("productos", productoGestion.getListaProductos() );
