@@ -16,21 +16,20 @@ public class AutenticarUsuarioControlador {
         }
 
         ctx.render("/templates/login.html", modelo);
-
     }
 
-    public void login(Context ctx) // Logica detrás del login, con sus respectivos errores y redirecciones a admin
-                                   // y productos y debajo un logout.
-    {
+    public void login(Context ctx) {
         String usuario = ctx.formParam("usuario");
         String password = ctx.formParam("password");
 
         Usuario user = usuarioGestion.autenticarUsuario(usuario, password).orElse(null);
 
         if (user != null) {
-            ctx.sessionAttribute("usuarioActivo", user);
-            System.out.println("Usuario autenticado: " + user.getUsuario() + "-" + user.getNombre() + " (Admin: "
-                    + user.isConfirmarAdmin() + ")");
+            // CORREGIDO: Usamos "usuarioActual" para que coincida con ProductoControlador
+            ctx.sessionAttribute("usuarioActual", user);
+
+            System.out
+                    .println("Usuario autenticado: " + user.getUsuario() + " (Admin: " + user.isConfirmarAdmin() + ")");
 
             if (user.isConfirmarAdmin()) {
                 ctx.redirect("/admin");
@@ -38,22 +37,20 @@ public class AutenticarUsuarioControlador {
                 ctx.redirect("/productos");
             }
         } else {
-            System.out.println("Intento de login fail para: " + usuario);
+            System.out.println("Intento de login fallido para: " + usuario);
             ctx.redirect("/login?error=true");
         }
-
     }
 
     public void logout(Context ctx) {
+        // CORREGIDO: Usamos "usuarioActual"
         Usuario usuarioActual = ctx.sessionAttribute("usuarioActual");
 
         if (usuarioActual != null) {
-            System.out.println("Usuario desconecntado: " + usuarioActual.getUsuario());
+            System.out.println("Usuario desconectado: " + usuarioActual.getUsuario());
         }
 
         ctx.req().getSession().invalidate();
         ctx.redirect("/productos");
-
     }
-
 }

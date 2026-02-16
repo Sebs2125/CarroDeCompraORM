@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Productos</title>
+</head>
+
+<body>
+
+    <h1>Lista de Productos</h1>
+
+    <p>Cantidad en carrito: <span th:text="${cantidadCarro}">0</span></p>
+
+    <ul>
+        <li th:each="p : ${productos}">
+            <b th:text="${p.nombre}">Nombre</b> —
+            Precio: <span th:text="${p.precio}">0</span>
+
+            <form action="/carrito/add" method="post">
+                <input type="hidden" name="id" th:value="${p.id}">
+                <button type="submit">Agregar</button>
+            </form>
+        </li>
+    </ul>
+
+    <a href="/carrito">Ver carrito</a>
+
+</body>
+
+</html>

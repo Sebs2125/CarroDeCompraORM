@@ -2,25 +2,79 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <title>Admin</title>
+    <meta charset="UTF-8">
+    <title>Tienda Marcar - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        .header-tienda {
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+    </style>
 </head>
 
 <body>
 
-    <h1>Panel Admin</h1>
-
-    <form action="/admin/productos" method="post">
-        Nombre: <input name="nombre">
-        Precio: <input name="precio">
-        Inventario: <input name="inventario">
-        <button type="submit">Crear</button>
-    </form>
-
-    <hr>
-
-    <div th:each="p : ${productos}">
-        <p th:text="${p.nombre}"></p>
+    <div class="header-tienda d-flex justify-content-between align-items-center">
+        <div class="fw-bold fs-4">Logo - Marcar</div>
+        <nav>
+            <a href="/productos" class="me-3 text-decoration-none">Comprar</a>
+            <a href="/ventas" class="me-3 text-decoration-none">Ventas Realizadas</a>
+            <a href="/admin" class="fw-bold text-dark me-3 text-decoration-none">Administrar Productos</a>
+            <a href="/logout" class="me-3 text-decoration-none text-danger fw-bold">Salir</a>
+            <a href="/carrito" class="btn btn-outline-primary btn-sm">Carrito</a>
+        </nav>
     </div>
+
+    <h2 class="mb-4">Administracion de Productos</h2>
+
+    <div class="bg-light p-4 rounded mb-4">
+        <h5 class="mb-3">Registrar Nuevo Producto</h5>
+        <form action="/admin/productos" method="post" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="nombre" class="form-control" placeholder="Nombre" required>
+            </div>
+            <div class="col-md-3">
+                <input type="number" step="0.01" name="precio" class="form-control" placeholder="Precio" required>
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="inventario" class="form-control" placeholder="Cantidad" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Crear</button>
+            </div>
+        </form>
+    </div>
+
+    <table class="table table-sm table-bordered">
+        <thead class="table-secondary">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Accion</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="p : ${productos}">
+                <td th:text="${p.id}"></td>
+                <td th:text="${p.nombre}"></td>
+                <td th:text="${p.precio}"></td>
+                <td th:text="${p.inventario}"></td>
+                <td>
+                    <form th:action="'/admin/productos/' + ${p.id} + '/delete'" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 
 </body>
 
