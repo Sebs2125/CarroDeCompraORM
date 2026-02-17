@@ -30,6 +30,16 @@ application {
     mainClass = 'org.example.Main'
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.example.Main'
+    }
+    // Incluir todas las dependencias en el JAR (Fat JAR)
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 
 test {
     useJUnitPlatform()

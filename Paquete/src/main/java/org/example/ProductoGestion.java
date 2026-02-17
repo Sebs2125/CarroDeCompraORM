@@ -17,12 +17,12 @@ public class ProductoGestion
 
     private void initializeProductos() //Dando lugar a productos en el software
     {
-        productos.add(new Producto("RAM 16GB", new Double("1500"), 20 ) );
-        productos.add(new Producto("Computadora", new Double("5000"), 15 ) );
-        productos.add(new Producto("Laptop", new Double("3500"), 10 ) );
-        productos.add(new Producto("Mouse Logitech", new Double("500"), 50 ) );
-        productos.add(new Producto("Teclado Mecanico", new Double("1000"), 25 ) );
-        productos.add(new Producto("Monitores", new Double("2000"), 15 ) );
+        productos.add(new Producto("RAM 16GB", 1500.0, 20 ) );
+        productos.add(new Producto("Computadora", 5000.0, 15 ) );
+        productos.add(new Producto("Laptop", 3500.0, 10 ) );
+        productos.add(new Producto("Mouse Logitech", 500.0, 50 ) );
+        productos.add(new Producto("Teclado Mecanico", 1000.0, 25 ) );
+        productos.add(new Producto("Monitores", 2000.0, 15 ) );
     }
 
     public static ProductoGestion getInstance()

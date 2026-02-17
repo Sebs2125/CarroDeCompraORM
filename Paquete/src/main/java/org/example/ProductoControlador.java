@@ -28,7 +28,7 @@ public class ProductoControlador
             modelo.put("Cantidad de Items en el carro: ", 0);
         }
 
-        ctx.render("productos.html", modelo );
+        ctx.render("/templates/productos.html", modelo );
 
     }
 
