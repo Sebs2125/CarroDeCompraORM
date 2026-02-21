@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+<<<<<<< HEAD
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
@@ -9,6 +10,17 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+=======
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Paquete" />
+        <option name="gradleHome" value="C:\Users\sebas\Workspace\gradle-9.3.1-bin\gradle-9.3.1" />
+        <option name="gradleJvm" value="corretto-24" />
+        <option name="modules">
+          <set>
+>>>>>>> 98d5f9263044a15972baa89a6e3f1e0e09a2c32c
             <option value="$PROJECT_DIR$/Paquete" />
           </set>
         </option>
