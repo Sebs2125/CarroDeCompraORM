@@ -45,7 +45,6 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-//Modificacion de version, ya que los demás archivos son de java 17, pasarlos a java 25
 java {
     sourceCompatibility = JavaVersion.VERSION_25
     targetCompatibility = JavaVersion.VERSION_25

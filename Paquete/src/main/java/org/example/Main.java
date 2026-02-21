@@ -93,7 +93,7 @@ public class Main {
 
         System.out.println("Productos cargados: " + productoGestion.getListaProductos().size());
 
-        System.out.println("Servidor HTTP fue iniciado en el puerto 7000");
+        System.out.println("Servidor HTTP fue iniciado en el puerto 8080");
 
         System.out.println("Sistema listo para recibir las peticiones del usuario \n");
 
