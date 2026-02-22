@@ -1,24 +1,43 @@
 package org.example;
 
+import jakarta.persistence.*;
+
+import java.util.List;
+
+/*
+Se manejan varios puntos en esta clase, puntos:
+3- Los modelos se deben relacionar con una entidad
+5- CRUD de producto con imagenes en Base64
+6- Vista y logica de producto referido a descripciones, imagenes y comentarios
+8- Paginacion de productos (gestion desde DAO)
+ */
+
+@Entity
 public class Producto
 {
-    private static int cont = 0; //Contador para que no hayan IDs repetidos
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private int id;
     private String nombre;
+    private String descripcion;
     private Double precio;
     private int inventario;
 
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductoImagen> imagenes;
+
+    @OneToMany( mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comentario> comentarios;
+
     public Producto ()
     {
-        this.id = ++cont;
-        this.precio = 0d; //Intelijj lo hizo automatico, investigué y sirve para dejar el precio en 0 pero como double y el d es para los bits (no acumule tanta memoria)
     }
 
     //Constructor
-    public Producto( String nombre, Double precio, int inventario )
+    public Producto( String nombre, String descripcion, Double precio, int inventario )
     {
-        this.id = ++cont;
+        this.descripcion = descripcion
         this.nombre = nombre;
         this.precio = precio;
         this.inventario = inventario;
