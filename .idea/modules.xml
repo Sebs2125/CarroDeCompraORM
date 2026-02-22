@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CarroDeCompraORM.iml" filepath="$PROJECT_DIR$/.idea/modules/CarroDeCompraORM.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Paquete/CarroDeCompraORM.Paquete.iml" filepath="$PROJECT_DIR$/.idea/modules/Paquete/CarroDeCompraORM.Paquete.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Paquete/CarroDeCompraORM.Paquete.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Paquete/CarroDeCompraORM.Paquete.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Paquete/CarroDeCompraORM.Paquete.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Paquete/CarroDeCompraORM.Paquete.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CarroDeCompraORM.main.iml" filepath="$PROJECT_DIR$/.idea/modules/CarroDeCompraORM.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CarroDeCompraORM.test.iml" filepath="$PROJECT_DIR$/.idea/modules/CarroDeCompraORM.test.iml" />
+    </modules>
+  </component>
+</project>

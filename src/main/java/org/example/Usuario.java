@@ -1,22 +1,40 @@
 package org.example;
 
+import jakarta.persistence.*;
+
+/*
+Puntos 3 y 4:
+3- Se trabaja con modelos de datos para las autenticaciones.
+4- Se puede recordar el usuario con las cookies (todo referido a servicio).
+ */
+
+@Entity
 public class Usuario
 {
 
+    @Id
+    @GeneratedValue( strategy =  GenerationType.IDENTITY )
+    private Long id;
+
+    @Column(unique = true)
     private String usuario;
-    private String nombre;
     private String password;
     private boolean confirmarAdmin;
+
+    @OneToMany( mappedBy = "usuario", cascade = CascadeType.ALL )
+    private List<CarritoItem> carrito;
+
+    @OneToMany( mappedBy = "usuario", cascade = CascadeType.ALL )
+    private List<Comentario> comentarios;
 
     public Usuario()
     {
     }
 
     //Constructor
-    public Usuario(String usuario, String nombre, String password, boolean confirmarAdmin)
+    public Usuario( String usuario, String password, boolean confirmarAdmin )
     {
         this.usuario = usuario;
-        this.nombre = nombre;
         this.password = password;
         this.confirmarAdmin = confirmarAdmin;
     }
