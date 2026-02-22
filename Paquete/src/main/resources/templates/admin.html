@@ -7,11 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { padding: 20px; }
-        .header-tienda {
-            border-bottom: 2px solid #eee;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-        }
         .img-thumb {
             width: 55px;
             height: 55px;
@@ -29,6 +24,7 @@
         <a href="/productos" class="me-3 text-decoration-none">Comprar</a>
         <a href="/ventas" class="me-3 text-decoration-none">Ventas Realizadas</a>
         <a href="/admin" class="me-3 text-decoration-none fw-bold text-dark">Administrar Productos</a>
+        <!-- usuario viene de ProductoControlador: modelo.put("usuario", usuarioActual) -->
         <span class="me-3 text-muted" th:if="${usuario != null}" th:text="${usuario.nombre}">Admin</span>
         <a href="/logout" class="text-decoration-none text-danger fw-bold">Salir</a>
     </div>
@@ -38,10 +34,7 @@
 
 <div class="bg-light p-4 rounded mb-4">
     <h5 class="mb-3">Registrar Nuevo Producto</h5>
-
-    <!-- enctype multipart obligatorio para subir imágenes -->
     <form action="/admin/productos" method="post" enctype="multipart/form-data" class="row g-3">
-
         <div class="col-md-4">
             <input type="text" name="nombre" class="form-control" placeholder="Nombre" required>
         </div>
@@ -51,28 +44,21 @@
         <div class="col-md-2">
             <input type="number" name="inventario" class="form-control" placeholder="Cantidad" required>
         </div>
-
-        <!-- Descripción -->
         <div class="col-md-4">
-            <input type="text" name="descripcion" class="form-control" placeholder="Descripción del producto">
+            <input type="text" name="descripcion" class="form-control" placeholder="Descripción">
         </div>
-
-        <!--  Imágenes  -->
         <div class="col-md-8">
             <label class="form-label mb-1 text-muted" style="font-size:.82rem;">
-                Imágenes del producto <span class="text-danger">*</span>
+                Imágenes <span class="text-danger">*</span>
             </label>
             <input type="file" name="imagenes" class="form-control" accept="image/*" multiple required>
         </div>
-
         <div class="col-md-4 d-flex align-items-end">
             <button type="submit" class="btn btn-primary w-100">Crear Producto</button>
         </div>
-
     </form>
 </div>
 
-<!-- Tabla de Productos -->
 <table class="table table-sm table-bordered align-middle">
     <thead class="table-secondary">
     <tr>
@@ -86,36 +72,34 @@
     </tr>
     </thead>
     <tbody>
+    <!-- productos viene de ProductoControlador: modelo.put("productos", ...) -->
     <tr th:each="p : ${productos}">
         <td th:text="${p.id}"></td>
-
-        <!-- Mostrar imagen en tabla -->
         <td>
             <img th:if="${p.imagenBase64 != null}"
                  th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
-                 class="img-thumb" alt="Imagen producto">
+                 width="50" height="50" style="object-fit:cover; border-radius:5px;">
             <span th:if="${p.imagenBase64 == null}" class="text-muted" style="font-size:.8rem;">Sin imagen</span>
         </td>
-
         <td th:text="${p.nombre}"></td>
         <td th:text="${p.descripcion}"></td>
         <td th:text="${p.precio}"></td>
         <td th:text="${p.inventario}"></td>
-
         <td>
-
             <button type="button" class="btn btn-warning btn-sm"
                     data-bs-toggle="modal"
-                    th:data-bs-target="'#modalEditar' + ${p.id}">Editar</button>
+                    th:data-bs-target="'#modalEditar' + ${p.id}">
+                Editar
+            </button>
 
             <form th:action="'/admin/productos/' + ${p.id} + '/delete'" method="post" style="display:inline;">
                 <button type="submit" class="btn btn-danger btn-sm"
-                        onclick="return confirm('¿Eliminar este producto?')">Eliminar</button>
-
-
+                        onclick="return confirm('¿Eliminar este producto?')">
+                    Eliminar
+                </button>
             </form>
 
-            <!--Editar-->
+            <!-- Modal Editar -->
             <div class="modal fade" th:id="'modalEditar' + ${p.id}" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -123,12 +107,10 @@
                             <h5 class="modal-title text-dark">Editar Producto</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-
-                        <!-- poder cambiar imagen  -->
+                        <!-- Ruta: app.post("/admin/productos/{id}/update") en Main.java -->
                         <form th:action="'/admin/productos/' + ${p.id} + '/update'"
                               method="post" enctype="multipart/form-data">
                             <div class="modal-body text-start">
-
                                 <input type="hidden" name="id" th:value="${p.id}">
 
                                 <label class="fw-bold mt-2">Nombre:</label>
@@ -139,28 +121,24 @@
                                 <input type="number" step="0.01" name="precio" th:value="${p.precio}"
                                        class="form-control" required>
 
-                                <label class="fw-bold mt-2">Stock en Inventario:</label>
+                                <label class="fw-bold mt-2">Stock:</label>
                                 <input type="number" name="inventario" th:value="${p.inventario}"
                                        class="form-control" required>
 
-                                <!--  Descripción en editar -->
                                 <label class="fw-bold mt-2">Descripción:</label>
                                 <input type="text" name="descripcion" th:value="${p.descripcion}"
                                        class="form-control">
 
-                                <!--   Imagen actual -->
                                 <div th:if="${p.imagenBase64 != null}" class="mt-2">
                                     <label class="fw-bold">Imagen actual:</label><br>
                                     <img th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
                                          class="img-thumb mt-1">
                                 </div>
 
-                                <!--– Nueva imagen (opcional al editar) -->
                                 <label class="fw-bold mt-2">Cambiar imagen(es):</label>
                                 <input type="file" name="imagenes" class="form-control"
                                        accept="image/*" multiple>
                                 <small class="text-muted">Deja vacío para mantener la imagen actual.</small>
-
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary"
@@ -168,12 +146,9 @@
                                 <button type="submit" class="btn btn-success">Guardar Cambios</button>
                             </div>
                         </form>
-
                     </div>
                 </div>
             </div>
-
-
         </td>
     </tr>
     </tbody>

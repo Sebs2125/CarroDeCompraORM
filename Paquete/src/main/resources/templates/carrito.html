@@ -18,13 +18,13 @@
         <a href="/productos" class="me-3 text-decoration-none">Comprar</a>
         <a href="/ventas" class="me-3 text-decoration-none">Ventas Realizadas</a>
 
-        <a th:if="${usuario != null && usuario.confirmarAdmin}"
+        <a th:if="${user != null && user.confirmarAdmin}"
            href="/admin" class="me-3 text-decoration-none">Administrar Productos</a>
 
-        <th:block th:if="${usuario != null}">
-            <span class="me-3 text-muted" th:text="${usuario.nombre}">Usuario</span>
+        <th:block th:if="${user != null}">
+            <span class="me-3 text-muted" th:text="${user.nombre}">user</span>
             <a href="/carrito" class="btn btn-outline-primary btn-sm me-2">
-                Carrito (<span th:text="${cantidadCarro != null ? cantidadCarro : 0}">0</span>)
+                Carrito (<span th:text="${CantidadProducto != null ? CantidadProducto : 0}">0</span>)
             </a>
             <a href="/logout" class="text-decoration-none text-danger fw-bold">Salir</a>
         </th:block>
