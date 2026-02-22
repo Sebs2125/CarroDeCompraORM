@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: org.eclipse.jetty.websocket:websocket-core-server:11.0.25" type="java-imported" external-system-id="GRADLE">
+    <properties groupId="org.eclipse.jetty.websocket" artifactId="websocket-core-server" version="11.0.25" baseVersion="11.0.25" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.eclipse.jetty.websocket/websocket-core-server/11.0.25/15caaae160f2bb2e09d8c1ccb1e0c6ec0a810cb/websocket-core-server-11.0.25.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
