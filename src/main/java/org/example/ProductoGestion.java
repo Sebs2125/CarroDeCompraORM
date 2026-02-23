@@ -1,13 +1,15 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.InputStream;
+import java.util.*;
+
+import static javax.print.attribute.standard.MediaSizeName.C;
 
 public class ProductoGestion
 {
     private static ProductoGestion instance;
     private List<Producto> productos;
+    private long nextId = 1;
 
     private ProductoGestion()
     {
@@ -15,14 +17,64 @@ public class ProductoGestion
         initializeProductos();
     }
 
+    private String cargarImagenDesdeResources( String nombreArchivo )
+    {
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream("/images/" + nombreArchivo);
+
+            if ( is == null )
+            {
+                System.out.println("No se encontro ninguna imagen: " +nombreArchivo);
+                return null;
+            }
+
+            byte[] bytes = is.readAllBytes();
+            is.close();
+            return Base64.getEncoder().encodeToString(bytes);
+
+        } catch ( Exception e ) {
+            System.out.println("Error cargando " + nombreArchivo + ": " + e.getMessage());
+            return null;
+        }
+    }
+
     private void initializeProductos() //Dando lugar a productos en el software
     {
-        productos.add(new Producto("RAM 16GB", 1500.0, 20 ) );
-        productos.add(new Producto("Computadora", 5000.0, 15 ) );
-        productos.add(new Producto("Laptop", 3500.0, 10 ) );
-        productos.add(new Producto("Mouse Logitech", 500.0, 50 ) );
-        productos.add(new Producto("Teclado Mecanico", 1000.0, 25 ) );
-        productos.add(new Producto("Monitores", 2000.0, 15 ) );
+        Producto p1 = new Producto("RAM 16GB", 1500.0, 20);
+        p1.setId(nextId++);
+        p1.setImagenBase64(cargarImagenDesdeResources("ram16gb.jpg"));
+        productos.add(p1);
+
+
+        Producto p2 = new Producto("Computadora", 5000.00, 15);
+        p2.setId(nextId++);
+        p2.setImagenBase64(cargarImagenDesdeResources("pcGaming.jpg"));
+        productos.add(p2);
+
+
+        Producto p3 = new Producto("Laptop", 3500.0, 10);
+        p3.setId(nextId++);
+        p3.setImagenBase64(cargarImagenDesdeResources("laptopGaming.jpg"));
+        productos.add(p3);
+
+        Producto p4 = new Producto("Mouse Logitech", 500.0, 50 );
+        p4.setId(nextId++);
+        p4.setImagenBase64(cargarImagenDesdeResources("mouseLogitech.jpg"));
+        productos.add(p4);
+
+
+        Producto p5 = new Producto("Teclado Mecanico", 1000.0, 25);
+        p5.setId(nextId++);
+        p5.setImagenBase64(cargarImagenDesdeResources("tecladoMecanico.jpg"));
+        productos.add(p5);
+
+
+        Producto p6 = new Producto("Monitores", 2000.0, 15);
+        p6.setId(nextId++);
+        p6.setImagenBase64(cargarImagenDesdeResources("MonitorGaming.jpg"));
+        productos.add(p6);
+
+
     }
 
     public static ProductoGestion getInstance()
@@ -47,12 +99,13 @@ public class ProductoGestion
     public Optional<Producto> obtenerProductoPorId(Long id)
     {
         return productos.stream()
-                .filter(producto -> producto.getId() == id)
+                .filter(producto -> Objects.equals(producto.getId(), id))
                 .findFirst();
     }
 
     public void addProducto(Producto producto)
     {
+        producto.setId(nextId++);
         productos.add(producto);
         System.out.println("Producto agregado: " + producto );
     }
@@ -64,7 +117,7 @@ public class ProductoGestion
             p.setDescripcion(producto.getDescripcion());
             p.setPrecio(producto.getPrecio());
             p.setInventario(producto.getInventario());
-            if (producto.getImagenBase64() != null) {
+            if (producto.getImagenBase64() != null &&  !producto.getImagenBase64().isEmpty()) {
                 p.setImagenBase64(producto.getImagenBase64());
             }
             System.out.println("Producto actualizado: " + p.getNombre());
@@ -73,7 +126,7 @@ public class ProductoGestion
 
     public void deletearProducto( Long id )
     {
-        productos.removeIf( p ->  p.getId() == id );
+        productos.removeIf( p ->  p.getId().equals(id) );
         System.out.println("Producto eliminado con ID: " + id );
     }
 
@@ -86,7 +139,12 @@ public class ProductoGestion
     public void reducirInventario(Long productoId, int cantidad ) //Si se mete un producto en el Carrito de compra, debe reducirse el inventario.
     {
         Optional<Producto> producto = obtenerProductoPorId(productoId);
-        producto.ifPresent( p -> p.setInventario( p.getInventario() - cantidad ) );
+        producto.ifPresent( p -> {
+            int nuevoInventario = p.getInventario() - cantidad;
+            p.setInventario(nuevoInventario);
+            System.out.println("Inventario reducido - Producto: " +p.getNombre() + ", Nuevo stock: " + nuevoInventario);
+        });
+
     }
 
 }

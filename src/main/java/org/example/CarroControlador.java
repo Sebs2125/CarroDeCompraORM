@@ -54,6 +54,8 @@ public class CarroControlador {
                 carro.agregarProducto(producto);
             }
 
+            productoGestion.reducirInventario(productoId, cantidad);
+
             System.out.println("Producto agregado al carrito - ID: " + productoId + ", Cantidad: " + cantidad);
             System.out.println("Total productos en carrito: " + carro.getCantidadProductos());
             ctx.redirect("/productos");

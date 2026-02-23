@@ -20,6 +20,7 @@ public class ManejoDeLoginConsulta
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, usuario);
             ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(3, ip);
             ps.setString(4, agente);
             ps.executeUpdate();
         } catch (Exception e) {

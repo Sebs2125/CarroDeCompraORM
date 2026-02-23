@@ -1,7 +1,9 @@
 package org.example;
 
 import io.javalin.http.Context;
+import io.javalin.http.UploadedFile;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,9 +22,9 @@ public class ProductoControlador {
         CarritoDeCompra carro = ctx.sessionAttribute("carro");
 
         if (carro != null) {
-            modelo.put("Cantidad de items en el carro: ", carro.getCantidadProductos());
+            modelo.put("CantidadCarro", carro.getCantidadProductos());
         } else {
-            modelo.put("Cantidad de Items en el carro: ", 0);
+            modelo.put("CantidadCarro", 0);
         }
 
         ctx.render("/templates/productos.html", modelo);
@@ -56,10 +58,21 @@ public class ProductoControlador {
 
         try {
             String nombre = ctx.formParam("nombre");
-            Double precio = new Double(ctx.formParam("precio"));
-            int inventario = new Integer(ctx.formParam("inventario"));
+            Double precio = Double.parseDouble(ctx.formParam("precio"));
+            int inventario = Integer.parseInt(ctx.formParam("inventario"));
+            String descripcion = ctx.formParam("descripcion");
 
-            Producto producto = new Producto(nombre, precio, inventario);
+            Producto producto = new Producto(nombre, descripcion, precio, inventario);
+
+            UploadedFile imagen = ctx.uploadedFile("imagen");
+
+            if ( imagen != null && imagen.size() > 0 )
+            {
+                byte[] bytes = imagen.content().readAllBytes();
+                String base64 = Base64.getEncoder().encodeToString(bytes);
+                producto.setImagenBase64(base64);
+            }
+
             productoGestion.addProducto(producto);
 
             System.out.println("Producto creado por " + usuarioActual.getUsuario() + ":" + producto.getNombre());
@@ -81,13 +94,14 @@ public class ProductoControlador {
         }
 
         try {
-            int id = Integer.parseInt(ctx.formParam("id"));
+            Long id = Long.parseLong(ctx.pathParam("id"));
             String nombre = ctx.formParam("nombre");
-            Double precio = new Double(ctx.formParam("precio"));
+            Double precio = Double.parseDouble(ctx.formParam("precio"));
             int inventario = Integer.parseInt(ctx.formParam("inventario"));
+            String descripcion = ctx.formParam("descripcion");
 
-            Producto producto = new Producto(nombre, precio, inventario);
-            producto.setId(Long.valueOf(id));
+            Producto producto = new Producto(nombre, descripcion, precio, inventario);
+            producto.setId(id);
             productoGestion.actualizarProducto(producto);
 
             System.out.println("Producto modificado por " + usuarioActual.getUsuario() + ":" + producto.getNombre());
