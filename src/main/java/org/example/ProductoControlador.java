@@ -87,7 +87,7 @@ public class ProductoControlador {
             int inventario = Integer.parseInt(ctx.formParam("inventario"));
 
             Producto producto = new Producto(nombre, precio, inventario);
-            producto.setId(id);
+            producto.setId(Long.valueOf(id));
             productoGestion.actualizarProducto(producto);
 
             System.out.println("Producto modificado por " + usuarioActual.getUsuario() + ":" + producto.getNombre());
@@ -110,7 +110,7 @@ public class ProductoControlador {
         }
 
         try {
-            int id = Integer.parseInt(ctx.pathParam("id"));
+            Long id = Long.parseLong(ctx.pathParam("id"));
             productoGestion.deletearProducto(id);
 
             System.out.println("Producto eliminado por " + usuarioActual.getUsuario() + ":" + id);

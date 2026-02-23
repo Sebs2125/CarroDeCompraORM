@@ -4,7 +4,7 @@
     <output-test url="file://$MODULE_DIR$/../../../Paquete/build/classes/java/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../Paquete/src/test" />
-    <orderEntry type="jdk" jdkName="corretto-24" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="CarroDeCompraORM.Paquete.main" />
     <orderEntry type="library" name="Gradle: io.javalin:javalin:5.6.3" level="project" />

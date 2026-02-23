@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Venta {
-    private int id;
+    private Long id;
     private String cliente;
     private List<Producto> productos;
     private double total;
 
-    public Venta(int id, String cliente, List<Producto> productos) {
+    public Venta(Long id, String cliente, List<Producto> productos) {
         this.id = id;
         this.cliente = cliente;
         this.productos = new ArrayList<>(productos);
         this.total = productos.stream().mapToDouble(Producto::getPrecio).sum();
     }
 
-    public int getId() {
+    public Long  getId() {
         return id;
     }
 

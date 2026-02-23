@@ -1,10 +1,17 @@
 package org.example;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
 public class Producto
 {
-    private static int cont = 0;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
 
-    private int id;
+    private Long id;
     private String nombre;
     private String descripcion;
     private Double precio;
@@ -13,13 +20,11 @@ public class Producto
 
     public Producto()
     {
-        this.id = ++cont;
         this.precio = 0d;
     }
 
     public Producto( String nombre, Double precio, int inventario )
     {
-        this.id = ++cont;
         this.nombre = nombre;
         this.precio = precio;
         this.inventario = inventario;
@@ -27,18 +32,14 @@ public class Producto
 
     public Producto( String nombre, String descripcion, Double precio, int inventario )
     {
-        this.id = ++cont;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.precio = precio;
         this.inventario = inventario;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-    public static int getCont() { return cont; }
-    public static void setCont(int cont) { Producto.cont = cont; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }

@@ -14,6 +14,7 @@ public class ProductoImagen
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
     @Column( columnDefinition = "TEXT" )

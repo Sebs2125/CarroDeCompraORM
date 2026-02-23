@@ -10,8 +10,21 @@ public class CarroControlador {
 
     public void addAlCarro(Context ctx) {
         try {
-            int productoId = Integer.parseInt(ctx.formParam("productoId"));
-            int cantidad = Integer.parseInt(ctx.formParam("cantidad"));
+
+            String paramProdId = ctx.formParam("productoId");
+            String paramCantidad = ctx.formParam("cantidad");
+
+            if (paramProdId == null || paramProdId.isEmpty() || paramProdId.equals("null") || paramProdId.equals("undefined")) {
+                ctx.status(400).result("ID de producto inválido");
+                return;
+            }
+            if (paramCantidad == null || paramCantidad.isEmpty() || paramCantidad.equals("null") || paramCantidad.equals("undefined")) {
+                ctx.status(400).result("Cantidad inválida");
+                return;
+            }
+
+            Long productoId = Long.parseLong(paramProdId);
+            int cantidad = Integer.parseInt(paramCantidad);
 
             Producto producto = productoGestion.obtenerProductoPorId(productoId).orElse(null);
 

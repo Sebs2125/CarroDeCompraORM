@@ -44,7 +44,7 @@ public class ProductoGestion
         return new ArrayList<>(productos);
     }
 
-    public Optional<Producto> obtenerProductoPorId(int id)
+    public Optional<Producto> obtenerProductoPorId(Long id)
     {
         return productos.stream()
                 .filter(producto -> producto.getId() == id)
@@ -71,19 +71,19 @@ public class ProductoGestion
         });
     }
 
-    public void deletearProducto( int id )
+    public void deletearProducto( Long id )
     {
         productos.removeIf( p ->  p.getId() == id );
         System.out.println("Producto eliminado con ID: " + id );
     }
 
-    public boolean poseeInventario(int productoId, int cantidad ) //Se verifica si de un producto se encuentra en el inventario o no.
+    public boolean poseeInventario(Long productoId, int cantidad ) //Se verifica si de un producto se encuentra en el inventario o no.
     {
         Optional<Producto> producto = obtenerProductoPorId(productoId);
         return producto.map(p -> p.getInventario() >= cantidad).orElse( false );
     }
 
-    public void reducirInventario(int productoId, int cantidad ) //Si se mete un producto en el Carrito de compra, debe reducirse el inventario.
+    public void reducirInventario(Long productoId, int cantidad ) //Si se mete un producto en el Carrito de compra, debe reducirse el inventario.
     {
         Optional<Producto> producto = obtenerProductoPorId(productoId);
         producto.ifPresent( p -> p.setInventario( p.getInventario() - cantidad ) );
