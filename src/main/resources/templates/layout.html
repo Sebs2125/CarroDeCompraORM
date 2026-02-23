@@ -35,7 +35,7 @@
         <th:block th:if="${usuario !=null}">
             <span class="me-3 text-muted" th:text="${usuario.nombre}">Usuario</span>
             <a href="/templates/carrito.html" class="btn btn-outline-primary btn-sm me-2">
-                Carrito (<span th:text="${cantidadCarro != null ? cantidadCarro : 0}">0</span>
+                Carrito (<span th:text="${CantidadProducto != null ? CantidadProducto : 0}">0</span>)
             </a>
             <a href="/logout" class="text-decoration-none text-danger fw-bold">Salir</a>
 

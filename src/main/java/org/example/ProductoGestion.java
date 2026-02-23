@@ -59,12 +59,15 @@ public class ProductoGestion
 
     public void actualizarProducto(Producto producto)
     {
-        Optional<Producto> productoYaExiste = obtenerProductoPorId(producto.getId());
-        productoYaExiste.ifPresent( p -> {
+        obtenerProductoPorId(producto.getId()).ifPresent(p -> {
             p.setNombre(producto.getNombre());
+            p.setDescripcion(producto.getDescripcion());
             p.setPrecio(producto.getPrecio());
             p.setInventario(producto.getInventario());
-            System.out.println("Producto actualizado: " + p);
+            if (producto.getImagenBase64() != null) {
+                p.setImagenBase64(producto.getImagenBase64());
+            }
+            System.out.println("Producto actualizado: " + p.getNombre());
         });
     }
 

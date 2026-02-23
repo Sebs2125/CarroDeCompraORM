@@ -42,57 +42,61 @@
 <!-- Carrito con productos -->
 <div th:if="${!#lists.isEmpty(productos)}">
 
-    <div class="mb-3">
-        <label class="fw-bold">Nombre del Cliente:</label>
-        <input type="text" id="nombreCliente" class="form-control w-50 mt-1"
-               placeholder="Escribe tu nombre" required>
-    </div>
+    <!-- Todo dentro de un solo form -->
+    <form action="/carrito/procesar" method="post" onsubmit="return validarCliente()">
 
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-        <tr>
-            <th>Producto</th>
-            <th>Precio (RD$)</th>
-            <th>Acción</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="p : ${productos}">
-            <td th:text="${p.nombre}"></td>
-            <td th:text="${p.precio}"></td>
-            <td>
-                <form th:action="'/carrito/remove/' + ${p.id}" method="post" style="display:inline;">
-                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-        <tfoot>
-        <tr class="fw-bold table-secondary">
-            <td class="text-end">Total:</td>
-            <td>RD$ <span th:text="${total}">0.00</span></td>
-            <td></td>
-        </tr>
-        </tfoot>
-    </table>
+        <!-- Nombre del cliente DENTRO del form -->
+        <div class="mb-3">
+            <label class="fw-bold" for="nombreCliente">Nombre del Cliente:</label>
+            <input type="text" id="nombreCliente" name="nombreCliente"
+                   class="form-control w-50 mt-1"
+                   placeholder="Escribe tu nombre" required>
+        </div>
 
-    <div class="mt-3 d-flex gap-2">
-        <!-- Procesar compra -->
-        <form action="/carrito/procesar" method="post" id="formProcesar">
-            <input type="hidden" name="nombreCliente" id="hiddenCliente">
-            <button type="submit" class="btn btn-success"
-                    onclick="document.getElementById('hiddenCliente').value = document.getElementById('nombreCliente').value">
-                Procesar Compra
-            </button>
-        </form>
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>Producto</th>
+                <th>Precio (RD$)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${productos}">
+                <td th:text="${p.nombre}"></td>
+                <td th:text="${p.precio}"></td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr class="fw-bold table-secondary">
+                <td class="text-end">Total:</td>
+                <td>RD$ <span th:text="${total}">0.00</span></td>
+            </tr>
+            </tfoot>
+        </table>
 
-        <!-- Limpiar carrito -->
-        <form action="/carrito/limpiar" method="post">
-            <button type="submit" class="btn btn-outline-secondary">Limpiar Carrito</button>
-        </form>
-    </div>
+        <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-success">Procesar Compra</button>
+        </div>
+
+    </form>
+
+    <!-- Limpiar carrito va en su propio form separado -->
+    <form action="/carrito/limpiar" method="post" class="mt-2">
+        <button type="submit" class="btn btn-outline-secondary">Limpiar Carrito</button>
+    </form>
 
 </div>
+
+<script>
+    function validarCliente() {
+        const nombre = document.getElementById('nombreCliente').value.trim();
+        if (!nombre) {
+            alert('Debes ingresar tu nombre para procesar la compra');
+            return false;
+        }
+        return true;
+    }
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

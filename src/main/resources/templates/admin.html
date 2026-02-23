@@ -1,160 +1,151 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8">
-    <title>Tienda Marcar - Admin</title>
+    <title>Admin - Productos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { padding: 20px; }
-        .img-thumb {
-            width: 55px;
-            height: 55px;
-            object-fit: cover;
-            border-radius: 6px;
-        }
-    </style>
+    <style> body { padding: 20px; } </style>
 </head>
-
 <body>
 
 <nav class="navbar mb-4 border-bottom pb-2">
     <a class="navbar-brand fw-bold fs-4" href="/productos">Carrito Compra</a>
     <div class="d-flex align-items-center">
-        <a href="/productos" class="me-3 text-decoration-none">Comprar</a>
-        <a href="/ventas" class="me-3 text-decoration-none">Ventas Realizadas</a>
-        <a href="/admin" class="me-3 text-decoration-none fw-bold text-dark">Administrar Productos</a>
-        <!-- usuario viene de ProductoControlador: modelo.put("usuario", usuarioActual) -->
-        <span class="me-3 text-muted" th:if="${usuario != null}" th:text="${usuario.nombre}">Admin</span>
+        <a href="/productos" class="me-3 text-decoration-none">Tienda</a>
+        <span class="me-3 text-muted" th:text="${usuario.nombre}">Admin</span>
         <a href="/logout" class="text-decoration-none text-danger fw-bold">Salir</a>
     </div>
 </nav>
 
-<h2 class="mb-4">Administración de Productos</h2>
+<h2 class="mb-4">Panel de Administración</h2>
 
-<div class="bg-light p-4 rounded mb-4">
-    <h5 class="mb-3">Registrar Nuevo Producto</h5>
-    <form action="/admin/productos" method="post" enctype="multipart/form-data" class="row g-3">
-        <div class="col-md-4">
-            <input type="text" name="nombre" class="form-control" placeholder="Nombre" required>
-        </div>
-        <div class="col-md-2">
-            <input type="number" step="0.01" name="precio" class="form-control" placeholder="Precio" required>
-        </div>
-        <div class="col-md-2">
-            <input type="number" name="inventario" class="form-control" placeholder="Cantidad" required>
-        </div>
-        <div class="col-md-4">
-            <input type="text" name="descripcion" class="form-control" placeholder="Descripción">
-        </div>
-        <div class="col-md-8">
-            <label class="form-label mb-1 text-muted" style="font-size:.82rem;">
-                Imágenes <span class="text-danger">*</span>
-            </label>
-            <input type="file" name="imagenes" class="form-control" accept="image/*" multiple required>
-        </div>
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Crear Producto</button>
-        </div>
-    </form>
+<!-- Formulario crear producto -->
+<div class="card mb-4">
+    <div class="card-header fw-bold">Agregar Nuevo Producto</div>
+    <div class="card-body">
+        <form action="/admin/productos" method="post" enctype="multipart/form-data">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="nombre" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Precio (RD$)</label>
+                    <input type="number" name="precio" step="0.01" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Inventario</label>
+                    <input type="number" name="inventario" class="form-control" required>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" name="descripcion" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Imagen</label>
+                    <input type="file" name="imagen" accept="image/*" class="form-control">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Agregar Producto</button>
+        </form>
+    </div>
 </div>
 
-<table class="table table-sm table-bordered align-middle">
-    <thead class="table-secondary">
+<!-- Tabla de productos -->
+<table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark">
     <tr>
-        <th>ID</th>
         <th>Imagen</th>
         <th>Nombre</th>
         <th>Descripción</th>
-        <th>Precio (RD$)</th>
+        <th>Precio</th>
         <th>Stock</th>
         <th>Acciones</th>
     </tr>
     </thead>
     <tbody>
-    <!-- productos viene de ProductoControlador: modelo.put("productos", ...) -->
     <tr th:each="p : ${productos}">
-        <td th:text="${p.id}"></td>
         <td>
             <img th:if="${p.imagenBase64 != null}"
                  th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
-                 width="50" height="50" style="object-fit:cover; border-radius:5px;">
-            <span th:if="${p.imagenBase64 == null}" class="text-muted" style="font-size:.8rem;">Sin imagen</span>
+                 width="60" height="60" style="object-fit:cover; border-radius:6px;">
+            <span th:if="${p.imagenBase64 == null}" class="text-muted">Sin imagen</span>
         </td>
         <td th:text="${p.nombre}"></td>
-        <td th:text="${p.descripcion}"></td>
-        <td th:text="${p.precio}"></td>
+        <td th:text="${p.descripcion != null ? p.descripcion : '-'}"></td>
+        <td th:text="'RD$ ' + ${p.precio}"></td>
         <td th:text="${p.inventario}"></td>
         <td>
-            <button type="button" class="btn btn-warning btn-sm"
-                    data-bs-toggle="modal"
-                    th:data-bs-target="'#modalEditar' + ${p.id}">
+            <!-- ✅ Usamos data-* attributes en vez de th:onclick con Strings -->
+            <button class="btn btn-warning btn-sm btn-editar"
+                    th:data-id="${p.id}"
+                    th:data-nombre="${p.nombre}"
+                    th:data-precio="${p.precio}"
+                    th:data-inventario="${p.inventario}"
+                    th:data-descripcion="${p.descripcion}">
                 Editar
             </button>
-
-            <form th:action="'/admin/productos/' + ${p.id} + '/delete'" method="post" style="display:inline;">
+            <form th:action="'/admin/productos/' + ${p.id} + '/delete'" method="post" style="display:inline">
                 <button type="submit" class="btn btn-danger btn-sm"
-                        onclick="return confirm('¿Eliminar este producto?')">
-                    Eliminar
-                </button>
+                        onclick="return confirm('¿Eliminar este producto?')">Eliminar</button>
             </form>
-
-            <!-- Modal Editar -->
-            <div class="modal fade" th:id="'modalEditar' + ${p.id}" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-warning">
-                            <h5 class="modal-title text-dark">Editar Producto</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <!-- Ruta: app.post("/admin/productos/{id}/update") en Main.java -->
-                        <form th:action="'/admin/productos/' + ${p.id} + '/update'"
-                              method="post" enctype="multipart/form-data">
-                            <div class="modal-body text-start">
-                                <input type="hidden" name="id" th:value="${p.id}">
-
-                                <label class="fw-bold mt-2">Nombre:</label>
-                                <input type="text" name="nombre" th:value="${p.nombre}"
-                                       class="form-control" required>
-
-                                <label class="fw-bold mt-2">Precio:</label>
-                                <input type="number" step="0.01" name="precio" th:value="${p.precio}"
-                                       class="form-control" required>
-
-                                <label class="fw-bold mt-2">Stock:</label>
-                                <input type="number" name="inventario" th:value="${p.inventario}"
-                                       class="form-control" required>
-
-                                <label class="fw-bold mt-2">Descripción:</label>
-                                <input type="text" name="descripcion" th:value="${p.descripcion}"
-                                       class="form-control">
-
-                                <div th:if="${p.imagenBase64 != null}" class="mt-2">
-                                    <label class="fw-bold">Imagen actual:</label><br>
-                                    <img th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
-                                         class="img-thumb mt-1">
-                                </div>
-
-                                <label class="fw-bold mt-2">Cambiar imagen(es):</label>
-                                <input type="file" name="imagenes" class="form-control"
-                                       accept="image/*" multiple>
-                                <small class="text-muted">Deja vacío para mantener la imagen actual.</small>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-success">Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </td>
     </tr>
     </tbody>
 </table>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+<!-- Modal editar -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditar" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="id" id="editId">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" id="editNombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <input type="text" name="descripcion" id="editDescripcion" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio</label>
+                        <input type="number" name="precio" id="editPrecio" step="0.01" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Inventario</label>
+                        <input type="number" name="inventario" id="editInventario" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Imagen (opcional)</label>
+                        <input type="file" name="imagen" accept="image/*" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Guardar Cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Leer data-* attributes en vez de pasar Strings en th:onclick
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('editId').value = this.dataset.id;
+            document.getElementById('editNombre').value = this.dataset.nombre;
+            document.getElementById('editPrecio').value = this.dataset.precio;
+            document.getElementById('editInventario').value = this.dataset.inventario;
+            document.getElementById('editDescripcion').value = this.dataset.descripcion !== 'null' ? this.dataset.descripcion : '';
+            document.getElementById('formEditar').action = '/admin/productos/' + this.dataset.id + '/update';
+            new bootstrap.Modal(document.getElementById('modalEditar')).show();
+        });
+    });
+</script>
+</body>
 </html>

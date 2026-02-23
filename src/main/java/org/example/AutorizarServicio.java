@@ -43,7 +43,7 @@ public class AutorizarServicio
     //Registrar nuevo usuario
     public void registrarUsuario( String username, String password, boolean esAdmin )
     {
-        Usuario usuario = new Usuario( username, password, esAdmin );
+        Usuario usuario = new Usuario( username, username, password, esAdmin );
         usuarioConsulta.crear( usuario );
     }
 
