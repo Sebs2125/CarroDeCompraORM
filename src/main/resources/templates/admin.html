@@ -76,7 +76,6 @@
         <td th:text="'RD$ ' + ${p.precio}"></td>
         <td th:text="${p.inventario}"></td>
         <td>
-            <!-- ✅ Usamos data-* attributes en vez de th:onclick con Strings -->
             <button class="btn btn-warning btn-sm btn-editar"
                     th:data-id="${p.id}"
                     th:data-nombre="${p.nombre}"
@@ -94,7 +93,6 @@
     </tbody>
 </table>
 
-<!-- Modal editar -->
 <div class="modal fade" id="modalEditar" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -134,7 +132,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Leer data-* attributes en vez de pasar Strings en th:onclick
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             document.getElementById('editId').value = this.dataset.id;
