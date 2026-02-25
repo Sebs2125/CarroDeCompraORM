@@ -1,10 +1,25 @@
 package org.example;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "usuario")
 public class Usuario
 {
+    @Id
+    @GeneratedValue( strategy = GenerationType.IDENTITY )
+    private Long id;
+
+    @Column(name = "usuario")
     private String usuario;
+
+    @Column(name = "nombre")
     private String nombre;
+
+    @Column(name = "password")
     private String password;
+
+    @Column(name = "confirmarAdmin")
     private boolean confirmarAdmin;
 
     public Usuario() {}
@@ -28,4 +43,12 @@ public class Usuario
 
     public boolean isConfirmarAdmin() { return confirmarAdmin; }
     public void setConfirmarAdmin(boolean confirmarAdmin) { this.confirmarAdmin = confirmarAdmin; }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 }

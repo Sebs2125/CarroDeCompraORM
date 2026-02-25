@@ -18,13 +18,15 @@ public class Comentario
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne (fetch = FetchType.LAZY)
+    @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
-    @ManyToOne
+    @ManyToOne( fetch = FetchType.LAZY)
+    @JoinColumn( name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @Column( columnDefinition = "TEXT")
+    @Column( columnDefinition = "TEXT", nullable = false)
     private String contenido;
 
     private LocalDateTime fecha = LocalDateTime.now();

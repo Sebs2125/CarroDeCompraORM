@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${producto.nombre}">Producto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+
+<nav class="navbar mb-4 border-bottom pb-2">
+    <a class="navbar-brand fw-bold fs-4" href="/productos">Carrito Compra</a>
+    <div class="d-flex align-items-center">
+        <a href="/productos" class="me-3">← Volver a productos</a>
+        <span th:if="${usuario != null}" th:text="${usuario.nombre}" class="me-3"></span>
+        <a th:if="${usuario != null}" href="/logout" class="text-danger">Salir</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <!-- Imágenes del producto -->
+        <div class="col-md-6">
+            <div th:if="${!#lists.isEmpty(imagenes)}" id="carouselImagenes" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <div th:each="img, iter : ${imagenes}"
+                         th:class="'carousel-item ' + ${iter.first ? 'active' : ''}">
+                        <img th:src="'data:image/jpeg;base64,' + ${img.base64}"
+                             class="d-block w-100" style="height: 400px; object-fit: cover;">
+                    </div>
+                </div>
+                <button th:if="${imagenes.size() > 1}" class="carousel-control-prev" type="button" data-bs-target="#carouselImagenes" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button th:if="${imagenes.size() > 1}" class="carousel-control-next" type="button" data-bs-target="#carouselImagenes" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+            <div th:if="${#lists.isEmpty(imagenes)}" class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                <span class="text-muted">Sin imágenes</span>
+            </div>
+        </div>
+
+        <!-- Info del producto -->
+        <div class="col-md-6">
+            <h1 th:text="${producto.nombre}"></h1>
+            <p class="text-muted" th:text="${producto.descripcion}"></p>
+            <h3 class="text-primary">RD$ <span th:text="${producto.precio}"></span></h3>
+            <p>Stock: <span th:text="${producto.inventario}"></span></p>
+
+            <form action="/carrito/add" method="post" class="d-flex gap-2 mb-4">
+                <input type="hidden" name="productoId" th:value="${producto.id}">
+                <input type="number" name="cantidad" value="1" min="1" class="form-control w-25">
+                <button type="submit" class="btn btn-success">Agregar al carrito</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Comentarios -->
+    <div class="mt-5">
+        <h3>Comentarios</h3>
+
+        <!-- Formulario para agregar comentario -->
+        <div th:if="${usuario != null}" class="card mb-4">
+            <div class="card-body">
+                <form action="/comentarios" method="post">
+                    <input type="hidden" name="productoId" th:value="${producto.id}">
+                    <div class="mb-3">
+                        <textarea name="contenido" class="form-control" rows="3"
+                                  placeholder="Escribe tu comentario..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Publicar comentario</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de comentarios -->
+        <div th:each="comentario : ${comentarios}" class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <!-- ✅ MANEJAR NULL con ? (operador seguro de Thymeleaf) -->
+                        <h6 class="card-subtitle mb-2 text-muted"
+                            th:text="${comentario.usuario != null ? comentario.usuario.nombre : 'Usuario desconocido'} + ' - ' + ${comentario.fecha}">
+                        </h6>
+                    </div>
+                    <!-- Botón eliminar solo para admin -->
+                    <form th:if="${esAdmin}"
+                          th:action="'/comentarios/' + ${comentario.id} + '/delete'"
+                          method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger"
+                                onclick="return confirm('¿Eliminar este comentario?')">
+                            Eliminar
+                        </button>
+                    </form>
+                </div>
+                <p class="card-text" th:text="${comentario.contenido}"></p>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(comentarios)}" class="text-muted">
+            No hay comentarios aún. ¡Sé el primero en comentar!
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
