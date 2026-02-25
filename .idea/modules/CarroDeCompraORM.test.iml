@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module external.linked.project.id="CarroDeCompraORM:test" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="org.example" external.system.module.type="sourceSet" external.system.module.version="1.0-SNAPSHOT" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_25">
+  <component name="NewModuleRootManager">
     <output-test url="file://$MODULE_DIR$/../../build/classes/java/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../src/test" />
-    <orderEntry type="jdk" jdkName="corretto-24" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="CarroDeCompraORM.main" />
     <orderEntry type="library" name="Gradle: io.javalin:javalin:6.7.0" level="project" />
     <orderEntry type="library" name="Gradle: io.javalin:javalin-rendering:6.7.0" level="project" />
     <orderEntry type="library" name="Gradle: org.thymeleaf:thymeleaf:3.1.2.RELEASE" level="project" />
-    <orderEntry type="library" name="Gradle: org.slf4j:slf4j-simple:2.0.7" level="project" />
+    <orderEntry type="library" name="Gradle: org.slf4j:slf4j-simple:2.0.9" level="project" />
     <orderEntry type="library" name="Gradle: org.hibernate.orm:hibernate-core:6.6.0.Final" level="project" />
     <orderEntry type="library" name="Gradle: com.h2database:h2:2.3.232" level="project" />
     <orderEntry type="library" name="Gradle: org.postgresql:postgresql:42.7.3" level="project" />

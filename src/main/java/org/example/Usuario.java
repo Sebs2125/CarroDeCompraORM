@@ -1,20 +1,25 @@
 package org.example;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "usuario")
 public class Usuario
 {
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY )
     private Long id;
 
+    @Column(name = "usuario")
     private String usuario;
+
+    @Column(name = "nombre")
     private String nombre;
+
+    @Column(name = "password")
     private String password;
+
+    @Column(name = "confirmarAdmin")
     private boolean confirmarAdmin;
 
     public Usuario() {}

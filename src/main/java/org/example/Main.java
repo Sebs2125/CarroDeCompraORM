@@ -28,31 +28,24 @@ public class Main
     public static void main(String[] args)
     {
 
-        UsuarioGestion usuarioGestion = UsuarioGestion.getInstance(); // Gestiones (servicios)
+        System.out.println("Iniciando servidor H2");
+        HibernateConsulta.iniciarServidor();
 
-        ProductoGestion productoGestion = ProductoGestion.getInstance();
-
-        AutenticarUsuarioControlador autenticarUsuarioControlador = new AutenticarUsuarioControlador();
-
-        ProductoControlador productoControlador = new ProductoControlador();
-
-        CarroControlador carroControlador = new CarroControlador();
+        final UsuarioGestion usuarioGestion = UsuarioGestion.getInstance(); // Gestiones (servicios)
+        final ProductoGestion productoGestion = ProductoGestion.getInstance();
+        final AutenticarUsuarioControlador autenticarUsuarioControlador = new AutenticarUsuarioControlador();
+        final ProductoControlador productoControlador = new ProductoControlador();
+        final CarroControlador carroControlador = new CarroControlador();
 
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add("/public", Location.CLASSPATH);
             config.fileRenderer( new JavalinThymeleaf());
         }).start(8080);
 
-        System.out.println("Carrito de Comrpa en Sesion");
-
         app.get("/", ctx -> ctx.redirect("/productos")); // Autenticar
-
         app.get("/login", autenticarUsuarioControlador::mostrarPaginaLogin);
-
         app.post("/login", autenticarUsuarioControlador::login);
-
         app.get("/logout", autenticarUsuarioControlador::logout);
-
         app.get("/productos", productoControlador::mostrarProducto);
 
         app.before("/ventas", ctx -> {
@@ -64,26 +57,17 @@ public class Main
         app.get("/ventas", ctx -> {
             Map<String, Object> modelo = new HashMap<>();
             modelo.put("ventas", ventas);
-
-            Usuario usuarioActual = ctx.sessionAttribute("usuarioActual");
-            modelo.put("usuario", usuarioActual);
-
+            modelo.put("usuario", ctx.sessionAttribute("usuarioActual"));
             ctx.render("/templates/ventas.html", modelo);
-
         });
 
         app.get("/admin", productoControlador::mostrarAdminPanel);
-
         app.post("/admin/productos", productoControlador::crearProducto);
-
         app.post("/admin/productos/{id}/update", productoControlador::actualizarProducto);
-
         app.post("/admin/productos/{id}/delete", productoControlador::deletearProducto);
 
         app.get("/carrito", carroControlador::mostrarCarro);
-
         app.post("/carrito/add", carroControlador::addAlCarro);
-
         app.post("/carrito/limpiar", carroControlador::limpiarCarro);
 
         app.post("/carrito/procesar", ctx -> {
@@ -96,18 +80,8 @@ public class Main
                 return;
            }
 
-           if ( nombreCliente == null || nombreCliente.trim().isEmpty() )
-           {
-               ctx.status(400).result("Nombre de cliente requerido");
-               return;
-           }
-
            Venta venta = new Venta(ventaIdCounter++, nombreCliente, carro.getListaProductos());
            ventas.add(venta);
-
-           System.out.println("Venta realizada: ID=" +venta.getId() +
-                   ", Cliente=" + nombreCliente +
-                   ", Total=" + venta.getTotal());
            carro.limpiar();
            ctx.redirect("/ventas");
 
@@ -121,12 +95,13 @@ public class Main
         });
 
         System.out.println("Usuarios cargados: " + usuarioGestion.todosLosUsuarios().size());
-
         System.out.println("Productos cargados: " + productoGestion.getListaProductos().size());
-
         System.out.println("Servidor HTTP fue iniciado en el puerto 8080");
+        System.out.println("H2 Consola: http://localhost:8082/");
 
-        System.out.println("Sistema listo para recibir las peticiones del usuario \n");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            HibernateConsulta.detenerServidor();
+        }));
 
     }
 

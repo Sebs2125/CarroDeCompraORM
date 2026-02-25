@@ -73,7 +73,7 @@ public class ProductoControlador {
                 producto.setImagenBase64(base64);
             }
 
-            productoGestion.addProducto(producto);
+            productoGestion.addProucto(producto);
 
             System.out.println("Producto creado por " + usuarioActual.getUsuario() + ":" + producto.getNombre());
             ctx.redirect("/admin");
