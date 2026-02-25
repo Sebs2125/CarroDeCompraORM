@@ -1,9 +1,9 @@
 package org.example;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Producto
@@ -13,10 +13,18 @@ public class Producto
 
     private Long id;
     private String nombre;
+
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
+
     private Double precio;
     private int inventario;
-    private String imagenBase64;
+
+    @OneToMany (mappedBy = "producto", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<ProductoImagen> imagenes = new ArrayList<>();
+
+    @OneToMany (mappedBy = "producto", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Comentario> comentarios = new ArrayList<>();
 
     public Producto()
     {
@@ -38,6 +46,12 @@ public class Producto
         this.inventario = inventario;
     }
 
+    public void agregarImagen( ProductoImagen imagen )
+    {
+        imagenes.add(imagen);
+        imagen.setProducto(this);
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -53,6 +67,25 @@ public class Producto
     public int getInventario() { return inventario; }
     public void setInventario(int inventario) { this.inventario = inventario; }
 
-    public String getImagenBase64() { return imagenBase64; }
-    public void setImagenBase64(String imagenBase64) { this.imagenBase64 = imagenBase64; }
+    public List<ProductoImagen> getImagenes() {
+        return imagenes;
+    }
+
+    public void setImagenes(List<ProductoImagen> imagenes) {
+        this.imagenes = imagenes;
+    }
+
+    public List<Comentario> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(List<Comentario> comentarios) {
+        this.comentarios = comentarios;
+    }
+
+    public String getImagenBase64()
+    {
+        return imagenes.isEmpty() ? null : imagenes.get(0).getBase64();
+    }
+
 }

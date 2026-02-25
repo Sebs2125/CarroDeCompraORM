@@ -13,11 +13,11 @@ public class ProductoImagen
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
-    @Column( columnDefinition = "TEXT" )
+    @Column( columnDefinition = "LONGTEXT" )
     private String base64;
 
     public ProductoImagen () {}

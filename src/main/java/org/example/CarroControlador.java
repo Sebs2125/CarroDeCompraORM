@@ -26,7 +26,7 @@ public class CarroControlador {
             Long productoId = Long.parseLong(paramProdId);
             int cantidad = Integer.parseInt(paramCantidad);
 
-            Producto producto = productoGestion.obtenerProuctoPorId(productoId).orElse(null);
+            Producto producto = productoGestion.obtenerProductoPorId(productoId).orElse(null);
 
             if (producto == null) {
                 ctx.status(404).result("El producto no existe");
