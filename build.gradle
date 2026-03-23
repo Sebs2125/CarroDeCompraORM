@@ -14,48 +14,43 @@ repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 dependencies {
+    implementation "io.javalin:javalin:6.7.0"
+    implementation "io.javalin:javalin-rendering:6.7.0"
 
-    implementation("io.javalin:javalin:6.7.0") //Javalin
-    implementation 'io.javalin:javalin-rendering:6.7.0'
+    implementation 'org.thymeleaf:thymeleaf:3.1.2.RELEASE'
 
-    implementation 'org.thymeleaf:thymeleaf:3.1.2.RELEASE' //Thymeleaf
+    implementation 'org.slf4j:slf4j-simple:2.0.9'
 
-    implementation 'org.slf4j:slf4j-simple:2.0.9' //SLF4J
-
-    implementation 'org.hibernate.orm:hibernate-core:6.6.0.Final' //Hibernate
-    implementation 'com.h2database:h2:2.3.232' //H2
+    implementation 'org.hibernate.orm:hibernate-core:6.6.0.Final'
+    implementation 'com.h2database:h2:2.3.232'
     implementation 'org.postgresql:postgresql:42.7.3'
 
     implementation 'org.jasypt:jasypt:1.9.3'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'com.google.code.gson:gson:2.10.1'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    implementation 'com.google.code.gson:gson:2.10.1' //Gson para JSON
-
-}
-
-application {
-    mainClass = 'org.example.Main'
 }
 
 jar {
     manifest {
         attributes 'Main-Class': 'org.example.Main'
     }
-    // Incluir todas las dependencias en el JAR (Fat JAR)
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
 }
 
 test {

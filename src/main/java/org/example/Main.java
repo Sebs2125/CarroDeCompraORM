@@ -17,7 +17,7 @@ public class Main {
     public static void main(String[] args) {
 
         // Iniciar H2 servidor
-        HibernateConsulta.iniciarServidor();
+        //HibernateConsulta.iniciarServidor();
 
         final UsuarioGestion usuarioGestion = UsuarioGestion.getInstance();
         final ProductoGestion productoGestion = ProductoGestion.getInstance();
@@ -121,8 +121,14 @@ public class Main {
         System.out.println("H2 Console: http://localhost:8082");
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            HibernateConsulta.detenerServidor();
+            //HibernateConsulta.detenerServidor();
             productoGestion.shutdown();
         }));
+
+        app = Javalin.create(config -> {
+            config.http.defaultContentType = "text/html; charset=UTF-8";
+        });
     }
+
+
 }

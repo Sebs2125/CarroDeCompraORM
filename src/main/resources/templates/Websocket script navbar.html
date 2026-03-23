@@ -1,0 +1,26 @@
+
+
+<script>
+    const socket = new WebSocket("ws://" + location.host + "/ws/usuarios");
+
+    socket.onopen = function () {
+        console.log("WebSocket conectado — solo contador");
+        // En esta página NO mandamos "verProducto" porque no estamos en el detalle
+    };
+
+    socket.onmessage = function (evento) {
+        const datos = JSON.parse(evento.data);
+
+        // PUNTO 2 — Solo actualizamos el contador aquí
+        if (datos.tipo === "contador") {
+            const el = document.getElementById("contadorUsuarios");
+            if (el) el.textContent = datos.usuarios;
+        }
+        // No manejamos "comentarioEliminado" aquí porque no hay lista de comentarios
+    };
+
+    socket.onclose = function () {
+        const el = document.getElementById("contadorUsuarios");
+        if (el) el.textContent = "?";
+    };
+</script>
