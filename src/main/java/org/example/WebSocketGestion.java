@@ -12,25 +12,30 @@ import java.util.concurrent.ConcurrentHashMap;
  *   - "users"     → transmite conteo de usuarios logueados en tiempo real
  *   - "comments"  → transmite eliminación de comentarios en tiempo real
  *   - "dashboard" → transmite actualizaciones de ventas en tiempo real
+ *
+ * CORRECCIONES aplicadas:
+ *   1. Archivo renombrado a WebSocketGestion.java (G mayúscula) para coincidir
+ *      con el nombre de la clase publica — Java exige que sean identicos.
+ *   2. Eliminadas todas las llamadas a ctx.session.isOpen() porque WsContext
+ *      en Javalin 5 no expone .session como campo publico. Las excepciones al
+ *      hacer .send() sobre conexiones cerradas quedan capturadas por el catch.
  */
-public class WebSocketGestion {
+public class WebSocketGestion
+{
 
     private static WebSocketGestion instance;
     private final Gson gson = new Gson();
 
-    // Mapa: sessionId → contexto WS
-    // Separamos los suscriptores por canal para no enviar mensajes a quien no corresponde
-
-    // Canal: conteo de usuarios conectados
+    // Canal: conteo de usuarios conectados  sessionId -> WsContext
     private final Map<String, WsContext> userCountSubs = new ConcurrentHashMap<>();
 
-    // Canal: comentarios por producto  productId → Set de contextos suscritos
+    // Canal: comentarios por producto  productId -> Set<WsContext>
     private final Map<Integer, Set<WsContext>> commentSubs = new ConcurrentHashMap<>();
 
-    // Canal: dashboard de ventas
+    // Canal: dashboard de ventas  sessionId -> WsContext
     private final Map<String, WsContext> dashboardSubs = new ConcurrentHashMap<>();
 
-    // Usuarios logueados activos: sessionId → nombre
+    // Usuarios logueados activos: sessionId -> nombre
     private final Map<String, String> activeUsers = new ConcurrentHashMap<>();
 
     private WebSocketGestion() {}
@@ -48,7 +53,7 @@ public class WebSocketGestion {
 
     public void subscribeUserCount(WsContext ctx) {
         userCountSubs.put(ctx.getSessionId(), ctx);
-        broadcastUserCount(); // enviar conteo actual al nuevo suscriptor
+        broadcastUserCount();
     }
 
     public void unsubscribeUserCount(WsContext ctx) {
@@ -61,9 +66,7 @@ public class WebSocketGestion {
 
     public void unsubscribeComments(WsContext ctx, int productId) {
         Set<WsContext> subs = commentSubs.get(productId);
-        if (subs != null) {
-            subs.remove(ctx);
-        }
+        if (subs != null) subs.remove(ctx);
     }
 
     public void subscribeDashboard(WsContext ctx) {
@@ -75,7 +78,7 @@ public class WebSocketGestion {
     }
 
     // ─────────────────────────────────────────────
-    //  Gestión de usuarios activos
+    //  Gestion de usuarios activos
     // ─────────────────────────────────────────────
 
     public void userLoggedIn(String sessionId, String username) {
@@ -96,24 +99,17 @@ public class WebSocketGestion {
     //  Broadcasts
     // ─────────────────────────────────────────────
 
-    /** Envía el conteo actualizado a todos los suscriptores del canal users */
     public void broadcastUserCount() {
         Map<String, Object> msg = new HashMap<>();
         msg.put("type", "user_count");
         msg.put("count", activeUsers.size());
         String json = gson.toJson(msg);
 
-        userCountSubs.values().removeIf(ctx -> !ctx.session.isOpen());
         userCountSubs.values().forEach(ctx -> {
             try { ctx.send(json); } catch (Exception ignored) {}
         });
     }
 
-    /**
-     * Notifica a todos los usuarios que ven un producto que se eliminó un comentario.
-     * @param productId  id del producto afectado
-     * @param commentId  id del comentario eliminado
-     */
     public void broadcastCommentDeleted(int productId, int commentId) {
         Set<WsContext> subs = commentSubs.get(productId);
         if (subs == null || subs.isEmpty()) return;
@@ -124,18 +120,12 @@ public class WebSocketGestion {
         msg.put("commentId", commentId);
         String json = gson.toJson(msg);
 
-        subs.removeIf(ctx -> !ctx.session.isOpen());
         subs.forEach(ctx -> {
             try { ctx.send(json); } catch (Exception ignored) {}
         });
     }
 
-    /**
-     * Envía la actualización de ventas al dashboard en tiempo real.
-     * @param ventaGestion la gestión con los datos actualizados
-     */
     public void broadcastDashboardUpdate(VentaGestion ventaGestion) {
-        dashboardSubs.values().removeIf(ctx -> !ctx.session.isOpen());
         if (dashboardSubs.isEmpty()) return;
 
         Map<String, Object> msg = new HashMap<>();
@@ -150,20 +140,15 @@ public class WebSocketGestion {
         });
     }
 
-    /**
-     * Envía un mensaje JSON ya construido a todos los suscriptores del canal
-     * de comentarios de un producto (usado para nuevos comentarios).
-     */
     public void broadcastComentarioAgregado(int productId, String json) {
         Set<WsContext> subs = commentSubs.get(productId);
         if (subs == null || subs.isEmpty()) return;
-        subs.removeIf(ctx -> !ctx.session.isOpen());
+
         subs.forEach(ctx -> {
             try { ctx.send(json); } catch (Exception ignored) {}
         });
     }
 
-    // Limpieza general al cerrar una conexión (cualquier canal)
     public void cleanupSession(String sessionId) {
         userCountSubs.remove(sessionId);
         dashboardSubs.remove(sessionId);

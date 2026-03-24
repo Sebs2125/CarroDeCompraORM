@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="21">
-      <module name="CarroDeCompraORM.Paquete" target="24" />
-      <module name="CarroDeCompraORM.Paquete.main" target="24" />
-      <module name="CarroDeCompraORM.Paquete.test" target="24" />
-    </bytecodeTargetLevel>
+    <bytecodeTargetLevel target="24" />
   </component>
 </project>

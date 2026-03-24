@@ -3,7 +3,6 @@ package org.example;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.rendering.template.JavalinThymeleaf;
-import io.javalin.websocket.WsContext;
 import com.google.gson.Gson;
 
 import java.util.HashMap;
@@ -39,13 +38,10 @@ public class Main {
         Gson gson = new Gson();
 
         // ── Javalin ──────────────────────────────────────────────────────────
+        // WebSocket está incluido en Javalin 5 / Jetty sin configuración extra.
         Javalin app = Javalin.create(set -> {
             set.staticFiles.add("/public", Location.CLASSPATH);
             set.fileRenderer(new JavalinThymeleaf());
-            // Habilitar WebSockets en Javalin 5
-            set.jetty.modifyWebSocketServletFactory(ws -> {
-                ws.setIdleTimeout(java.time.Duration.ofMinutes(10));
-            });
         }).start(8080);
 
         System.out.println("=== Carrito de Compra con WebSockets ===");
