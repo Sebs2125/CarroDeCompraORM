@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+        #wsStatus {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .chart-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        #lastUpdate {
+            font-size: 0.78rem;
+            color: #6c757d;
+        }
+        .pulse {
+            animation: pulse 0.6s ease-out;
+        }
+        @keyframes pulse {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.12); color: #198754; }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar mb-4 border-bottom pb-2">
+    <a class="navbar-brand fw-bold fs-4" href="/productos">Carrito Compra</a>
+    <div class="d-flex align-items-center gap-3">
+        <a href="/productos" class="text-decoration-none">Comprar</a>
+        <a href="/ventas"   class="text-decoration-none">Ventas</a>
+        <a href="/admin"    class="text-decoration-none">Admin productos</a>
+        <a href="/dashboard" class="text-decoration-none fw-bold text-dark">Dashboard</a>
+        <span class="text-muted" th:text="${usuario != null ? usuario.nombre : ''}"></span>
+        <a href="/logout"   class="text-decoration-none text-danger fw-bold">Salir</a>
+
+        <!-- Indicador de usuarios en línea -->
+        <span class="badge bg-primary ms-2">
+            <span id="onlineCount">0</span> en línea
+        </span>
+        <!-- Estado de la conexión WS -->
+        <span id="wsStatus" class="badge bg-secondary">⚡ Conectando...</span>
+    </div>
+</nav>
+
+<h2 class="mb-4">Dashboard de Ventas
+    <small class="text-muted fs-6 ms-2" id="lastUpdate">Cargando datos...</small>
+</h2>
+
+<!-- Estadísticas principales -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number" id="totalVentasNum">RD$ 0</div>
+            <div class="stat-label">Total recaudado</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number" id="cantVentasNum">0</div>
+            <div class="stat-label">Ventas realizadas</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number" id="promedioVenta">RD$ 0</div>
+            <div class="stat-label">Promedio por venta</div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de torta -->
+<div class="row">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <h5 class="mb-3">Productos más vendidos</h5>
+            <div id="noDataMsg" class="text-center text-muted py-5" style="display:none;">
+                <p>Aún no hay ventas registradas.</p>
+                <small>El gráfico se actualizará en tiempo real cuando se procese una compra.</small>
+            </div>
+            <canvas id="pieChart" height="300"></canvas>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card h-100">
+            <h5 class="mb-3">Detalle por producto</h5>
+            <table class="table table-sm">
+                <thead class="table-light">
+                <tr><th>Producto</th><th class="text-end">Unidades</th></tr>
+                </thead>
+                <tbody id="productosTable">
+                <tr><td colspan="2" class="text-muted text-center">Sin datos</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // Datos iniciales desde el servidor (carga síncrona al renderizar la página)
+    var initialData = /*[[${dashboardData}]]*/ '{}';
+    var dashboardData = JSON.parse(initialData);
+
+    // ─── Chart.js setup ──────────────────────────────────────────────────────
+    var pieCtx = document.getElementById('pieChart').getContext('2d');
+    var pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    '#0d6efd','#198754','#ffc107','#dc3545',
+                    '#0dcaf0','#6f42c1','#fd7e14','#20c997'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + ' unidades'
+                    }
+                }
+            }
+        }
+    });
+
+    // ─── Actualizar la UI con nuevos datos ───────────────────────────────────
+    function updateDashboard(data) {
+        var total    = data.totalVentas    || 0;
+        var cant     = data.cantidadVentas || 0;
+        var promedio = cant > 0 ? (total / cant) : 0;
+        var productos = data.productosMasVendidos || {};
+
+        // Estadísticas
+        animateValue('totalVentasNum', 'RD$ ' + total.toFixed(2));
+        animateValue('cantVentasNum',  String(cant));
+        animateValue('promedioVenta',  'RD$ ' + promedio.toFixed(2));
+
+        // Gráfico
+        var labels   = Object.keys(productos);
+        var values   = Object.values(productos);
+        var noData   = labels.length === 0;
+
+        document.getElementById('noDataMsg').style.display = noData ? 'block' : 'none';
+        document.getElementById('pieChart').style.display  = noData ? 'none'  : 'block';
+
+        pieChart.data.labels              = labels;
+        pieChart.data.datasets[0].data    = values;
+        pieChart.update('active');
+
+        // Tabla detalle
+        var tbody = document.getElementById('productosTable');
+        if (noData) {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-muted text-center">Sin datos</td></tr>';
+        } else {
+            tbody.innerHTML = labels.map(function(nombre, i) {
+                return '<tr><td>' + nombre + '</td><td class="text-end fw-bold">' + values[i] + '</td></tr>';
+            }).join('');
+        }
+
+        // Timestamp
+        document.getElementById('lastUpdate').textContent =
+            'Última actualización: ' + new Date().toLocaleTimeString('es-DO');
+    }
+
+    function animateValue(id, newValue) {
+        var el = document.getElementById(id);
+        if (el.textContent !== newValue) {
+            el.textContent = newValue;
+            el.classList.remove('pulse');
+            void el.offsetWidth; // reflow para reiniciar animación
+            el.classList.add('pulse');
+        }
+    }
+
+    // Carga inicial (datos del servidor al primer render, sin WS todavía)
+    updateDashboard(dashboardData);
+
+    // ─── WebSocket: dashboard ────────────────────────────────────────────────
+    var wsDash;
+    function connectDashboardWS() {
+        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsDash = new WebSocket(proto + '//' + location.host + '/ws/dashboard');
+
+        wsDash.onopen = function() {
+            document.getElementById('wsStatus').textContent = '⚡ Tiempo real';
+            document.getElementById('wsStatus').className   = 'badge bg-success';
+            console.log('WS dashboard conectado');
+        };
+
+        wsDash.onmessage = function(event) {
+            try {
+                var msg = JSON.parse(event.data);
+                if (msg.type === 'dashboard_update') {
+                    updateDashboard(msg);
+                }
+            } catch(e) { console.error('WS parse error', e); }
+        };
+
+        wsDash.onclose = function() {
+            document.getElementById('wsStatus').textContent = '⚡ Reconectando...';
+            document.getElementById('wsStatus').className   = 'badge bg-warning text-dark';
+            setTimeout(connectDashboardWS, 3000); // reconexión automática
+        };
+
+        wsDash.onerror = function(err) {
+            console.error('WS dashboard error:', err);
+        };
+    }
+
+    // ─── WebSocket: contador de usuarios en línea ────────────────────────────
+    var wsUsers;
+    function connectUsersWS() {
+        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUsers = new WebSocket(proto + '//' + location.host + '/ws/users');
+
+        wsUsers.onopen = function() {
+            // Informar al servidor que somos admin (logueado)
+            var username = /*[[${usuario != null ? usuario.nombre : ''}]]*/ '';
+            if (username) {
+                wsUsers.send(JSON.stringify({ action: 'login', username: username }));
+            }
+        };
+
+        wsUsers.onmessage = function(event) {
+            try {
+                var msg = JSON.parse(event.data);
+                if (msg.type === 'user_count') {
+                    document.getElementById('onlineCount').textContent = msg.count;
+                }
+            } catch(e) {}
+        };
+
+        wsUsers.onclose = function() {
+            setTimeout(connectUsersWS, 3000);
+        };
+    }
+
+    connectDashboardWS();
+    connectUsersWS();
+
+    // Notificar logout al cerrar ventana
+    window.addEventListener('beforeunload', function() {
+        if (wsUsers && wsUsers.readyState === WebSocket.OPEN) {
+            wsUsers.send(JSON.stringify({ action: 'logout' }));
+        }
+    });
+</script>
+</body>
+</html>

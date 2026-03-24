@@ -23,21 +23,20 @@ java {
 }
 
 dependencies {
-    implementation "io.javalin:javalin:6.7.0"
-    implementation "io.javalin:javalin-rendering:6.7.0"
+    // ── Javalin (incluye WebSocket via Jetty internamente) ──────────────────
+    implementation 'io.javalin:javalin:5.6.3'
+    implementation 'io.javalin:javalin-rendering:5.6.3'
 
+    // ── Thymeleaf ────────────────────────────────────────────────────────────
     implementation 'org.thymeleaf:thymeleaf:3.1.2.RELEASE'
 
-    implementation 'org.slf4j:slf4j-simple:2.0.9'
+    // ── Logging ──────────────────────────────────────────────────────────────
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
 
-    implementation 'org.hibernate.orm:hibernate-core:6.6.0.Final'
-    implementation 'com.h2database:h2:2.3.232'
-    implementation 'org.postgresql:postgresql:42.7.3'
-
-    implementation 'org.jasypt:jasypt:1.9.3'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    // ── JSON (Gson para serializar mensajes WebSocket) ───────────────────────
     implementation 'com.google.code.gson:gson:2.10.1'
 
+    // ── Tests ─────────────────────────────────────────────────────────────────
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

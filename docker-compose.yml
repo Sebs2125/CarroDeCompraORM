@@ -1,41 +1,38 @@
 services:
 
-  # ── Servidor H2 en modo servidor
-  # Necesario porque HibernateConsulta.java usa jdbc:h2:tcp://
+  # ── H2 en modo servidor TCP ──────────────────────────────────────────────
   h2-server:
     image: oscarfonts/h2:latest
     container_name: h2-server
     restart: unless-stopped
     volumes:
-      - h2-data:/opt/h2-data        # Persistencia de la base de datos
+      - h2-data:/opt/h2-data
     networks:
       - app-network
-    # Puerto 9092 es el puerto TCP de H2 (tu HibernateConsulta usa ese puerto)
     expose:
       - "9092"
 
-  # ── Aplicación Javalin — CarritoDeCompra
+  # ── Aplicación Javalin + WebSockets ─────────────────────────────────────
   app:
-    build: .                          # Construye desde el Dockerfile local
+    build: .
     container_name: carrito-app
     restart: unless-stopped
     depends_on:
-      - h2-server                     # Espera a que H2 esté listo primero
+      - h2-server
     environment:
       PORT: 8080
-      # Aquí "h2-server" es el nombre del servicio Docker, no localhost
-      # Esto sobreescribe HibernateConsulta.java si lo adaptas para leer env vars
       DB_URL: jdbc:h2:tcp://h2-server:9092/~/carritodb
       DB_USER: sa
       DB_PASS: ""
     ports:
-      - "8080:8080"                   # Exponer al host → acceso en localhost:8080
+      # Puerto HTTP + WebSocket (WS usa el mismo puerto que HTTP en Javalin/Jetty)
+      - "8080:8080"
     networks:
       - app-network
 
 volumes:
-  h2-data:                            # Volumen nombrado para persistir datos H2
+  h2-data:
 
 networks:
   app-network:
-    driver: bridge                    # Red interna entre contenedores
+    driver: bridge

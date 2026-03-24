@@ -3,132 +3,215 @@ package org.example;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.rendering.template.JavalinThymeleaf;
+import io.javalin.websocket.WsContext;
+import com.google.gson.Gson;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+/**
+ * Aplicación de Carrito de Compras con WebSockets.
+ *
+ * Requerimientos implementados:
+ *  1. Base HTTP/CRUD (heredado)
+ *  2. Contador de usuarios logueados en tiempo real (WS)
+ *  3. Eliminación de comentarios en tiempo real (WS)
+ *  4. Dashboard admin con ventas y gráfico de torta en tiempo real (WS)
+ *  5. Docker / Docker Compose (heredado + actualizado)
+ */
 public class Main {
-
-    private static List<Venta> ventas = new ArrayList<>();
-    private static long ventaIdCounter = 1;
 
     public static void main(String[] args) {
 
-        // Iniciar H2 servidor
-        //HibernateConsulta.iniciarServidor();
+        // ── Servicios (Singleton) ────────────────────────────────────────────
+        UsuarioGestion usuarioGestion = UsuarioGestion.getInstance();
+        ProductoGestion productoGestion = ProductoGestion.getInstance();
+        ComentarioGestion comentarioGestion = ComentarioGestion.getInstance();
+        VentaGestion ventaGestion = VentaGestion.getInstance();
+        WebSocketGestion wsGestion = WebSocketGestion.getInstance();
 
-        final UsuarioGestion usuarioGestion = UsuarioGestion.getInstance();
-        final ProductoGestion productoGestion = ProductoGestion.getInstance();
-        final AutenticarUsuarioControlador autenticarUsuarioControlador = new AutenticarUsuarioControlador();
-        final ProductoControlador productoControlador = new ProductoControlador();
-        final CarroControlador carroControlador = new CarroControlador();
-        final ComentarioControlador comentarioControlador = new ComentarioControlador();
+        // ── Controladores HTTP ───────────────────────────────────────────────
+        AutenticarUsuarioControlador autenticarCtrl = new AutenticarUsuarioControlador();
+        ProductoControlador productoCtrl = new ProductoControlador();
+        CarroControlador carroCtrl = new CarroControlador();
+        ComentarioControlador comentarioCtrl = new ComentarioControlador();
 
-        Javalin app = Javalin.create(config -> {
-            config.staticFiles.add("/public", Location.CLASSPATH);
-            config.fileRenderer(new JavalinThymeleaf());
+        Gson gson = new Gson();
+
+        // ── Javalin ──────────────────────────────────────────────────────────
+        Javalin app = Javalin.create(set -> {
+            set.staticFiles.add("/public", Location.CLASSPATH);
+            set.fileRenderer(new JavalinThymeleaf());
+            // Habilitar WebSockets en Javalin 5
+            set.jetty.modifyWebSocketServletFactory(ws -> {
+                ws.setIdleTimeout(java.time.Duration.ofMinutes(10));
+            });
         }).start(8080);
 
-        // Middleware: Validar cookie "recordar usuario" (Punto 4)
-        app.before(ctx -> {
-            if ( ctx.sessionAttribute("usuarioActual") == null )
-            {
-                String token = ctx.cookie("recordarUsuario");
+        System.out.println("=== Carrito de Compra con WebSockets ===");
 
-                if ( token != null )
-                {
-                    String username = ServicioCookies.validaryExtraerUsuario(token);
+        // ════════════════════════════════════════════════════════════════════
+        //  RUTAS HTTP
+        // ════════════════════════════════════════════════════════════════════
 
-                    if ( username != null )
-                    {
-                        Usuario user = usuarioGestion.buscarUsuario(username).orElse(null );
-                        if ( user != null )
-                        {
-                            ctx.sessionAttribute("usuarioActual", user);
-                            System.out.println("Auto-login via cookie: " + username);
-                        }
-                    }
+        app.get("/", ctx -> ctx.redirect("/productos"));
+
+        // Auth
+        app.get("/login",  autenticarCtrl::mostrarPaginaLogin);
+        app.post("/login",  autenticarCtrl::login);
+        app.get("/logout", autenticarCtrl::logout);
+
+        // Productos
+        app.get("/productos", productoCtrl::mostrarProducto);
+        app.get("/productos/{id}", comentarioCtrl::mostrarDetalleProducto);
+
+        // Comentarios
+        app.post("/productos/{id}/comentarios", comentarioCtrl::agregarComentario);
+        app.post("/admin/comentarios/{id}/delete", comentarioCtrl::eliminarComentario);
+
+        // Carrito
+        app.get("/carrito",       carroCtrl::mostrarCarro);
+        app.post("/carrito/add",  carroCtrl::addAlCarro);
+        app.post("/carrito/limpiar", carroCtrl::limpiarCarro);
+
+        // Procesar compra → registra la venta y notifica dashboard via WS
+        app.post("/carrito/procesar", ctx -> {
+            CarritoDeCompra carro = ctx.sessionAttribute("carro");
+            Usuario usuario = ctx.sessionAttribute("usuarioActual");
+
+            if (carro != null && !carro.getListaProductos().isEmpty()) {
+                String nombreCliente = ctx.formParam("nombreCliente");
+                if (nombreCliente == null || nombreCliente.isBlank()) {
+                    nombreCliente = (usuario != null) ? usuario.getNombre() : "Invitado";
                 }
+                // ── Registrar venta (también hace broadcast WS al dashboard) ──
+                ventaGestion.registrarVenta(nombreCliente, carro.getListaProductos());
+                carro.getListaProductos().clear();
             }
+
+            ctx.redirect("/ventas");
         });
 
-        // Rutas de autenticación
-        app.get("/", ctx -> ctx.redirect("/productos"));
-        app.get("/login", autenticarUsuarioControlador::mostrarPaginaLogin);
-        app.post("/login", autenticarUsuarioControlador::login);
-        app.get("/logout", autenticarUsuarioControlador::logout);
-
-        // Rutas de productos (con paginación - Punto 8)
-        app.get("/productos", productoControlador::mostrarProducto);
-        app.get("/producto/{id}", productoControlador::mostrarDetalleProducto); // Punto 6
-
-        // Comentarios (Punto 6 y 7)
-        app.post("/comentarios", comentarioControlador::agregarComentario);
-        app.post("/comentarios/{id}/delete", comentarioControlador::eliminarComentario);
-
-        // Ventas
+        // Ventas (requiere login)
         app.before("/ventas", ctx -> {
             if (ctx.sessionAttribute("usuarioActual") == null) {
                 ctx.redirect("/login");
             }
         });
-
         app.get("/ventas", ctx -> {
             Map<String, Object> modelo = new HashMap<>();
-            modelo.put("ventas", ventas);
+            modelo.put("ventas", ventaGestion.getVentas());
             modelo.put("usuario", ctx.sessionAttribute("usuarioActual"));
             ctx.render("/templates/ventas.html", modelo);
         });
 
-        // Admin
-        app.get("/admin", productoControlador::mostrarAdminPanel);
-        app.post("/admin/productos", productoControlador::crearProducto);
-        app.post("/admin/productos/{id}/update", productoControlador::actualizarProducto);
-        app.post("/admin/productos/{id}/delete", productoControlador::deletearProducto);
+        // Admin CRUD productos
+        app.get("/admin", productoCtrl::mostrarAdminPanel);
+        app.post("/admin/productos", productoCtrl::crearProducto);
+        app.post("/admin/productos/{id}/update", productoCtrl::actualizarProducto);
+        app.post("/admin/productos/{id}/delete", productoCtrl::deletearProducto);
 
-        // Carrito
-        app.get("/carrito", carroControlador::mostrarCarro);
-        app.post("/carrito/add", carroControlador::addAlCarro);
-        app.post("/carrito/limpiar", carroControlador::limpiarCarro);
-
-        app.post("/carrito/procesar", ctx -> {
-            CarritoDeCompra carro = ctx.sessionAttribute("carro");
-            String nombreCliente = ctx.formParam("nombreCliente");
-
-            if ( carro == null || carro.getListaProductos().isEmpty() )
-            {
-                ctx.redirect("/carrito");
+        // Dashboard (solo admin)
+        app.get("/dashboard", ctx -> {
+            Usuario usuario = ctx.sessionAttribute("usuarioActual");
+            if (usuario == null || !usuario.isConfirmarAdmin()) {
+                ctx.status(403).result("Acceso denegado al dashboard");
                 return;
             }
-
-            Venta venta = new Venta(ventaIdCounter++, nombreCliente, carro.getListaProductos());
-            ventas.add(venta);
-            carro.limpiar();
-            ctx.redirect("/ventas");
+            Map<String, Object> modelo = new HashMap<>();
+            modelo.put("usuario", usuario);
+            modelo.put("dashboardData", gson.toJson(ventaGestion.getDashboardData()));
+            ctx.render("/templates/dashboard.html", modelo);
         });
 
-        app.error(404, ctx -> ctx.result("Pagina no encontrada - 404"));
+        // ════════════════════════════════════════════════════════════════════
+        //  WEBSOCKETS
+        // ════════════════════════════════════════════════════════════════════
+
+        /**
+         * WS /ws/users  → canal del contador de usuarios en línea.
+         * Cualquier página puede conectarse para ver cuántos usuarios hay.
+         */
+        app.ws("/ws/users", ws -> {
+            ws.onConnect(ctx -> {
+                wsGestion.subscribeUserCount(ctx);
+                System.out.println("WS users connect: " + ctx.getSessionId());
+            });
+            ws.onMessage(ctx -> {
+                // El cliente puede mandar su estado de login al conectarse
+                // Mensaje esperado: {"action":"login","username":"...","httpSessionId":"..."}
+                try {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> msg = gson.fromJson(ctx.message(), Map.class);
+                    String action = msg.get("action");
+                    String username = msg.get("username");
+                    if ("login".equals(action) && username != null) {
+                        wsGestion.userLoggedIn(ctx.getSessionId(), username);
+                    } else if ("logout".equals(action)) {
+                        wsGestion.userLoggedOut(ctx.getSessionId());
+                    }
+                } catch (Exception e) {
+                    System.err.println("WS users message error: " + e.getMessage());
+                }
+            });
+            ws.onClose(ctx -> {
+                wsGestion.userLoggedOut(ctx.getSessionId());
+                wsGestion.unsubscribeUserCount(ctx);
+                wsGestion.cleanupSession(ctx.getSessionId());
+                System.out.println("WS users close: " + ctx.getSessionId());
+            });
+            ws.onError(ctx -> System.err.println("WS users error: " + ctx.error()));
+        });
+
+        /**
+         * WS /ws/comments/{productId} → canal de comentarios por producto.
+         * Sólo las páginas de detalle de ese producto se conectan aquí.
+         */
+        app.ws("/ws/comments/{productId}", ws -> {
+            ws.onConnect(ctx -> {
+                int productId = Integer.parseInt(ctx.pathParam("productId"));
+                wsGestion.subscribeComments(ctx, productId);
+                System.out.println("WS comments connect: producto " + productId);
+            });
+            ws.onClose(ctx -> {
+                int productId = Integer.parseInt(ctx.pathParam("productId"));
+                wsGestion.unsubscribeComments(ctx, productId);
+                wsGestion.cleanupSession(ctx.getSessionId());
+            });
+            ws.onError(ctx -> System.err.println("WS comments error: " + ctx.error()));
+        });
+
+        /**
+         * WS /ws/dashboard → canal del dashboard de ventas.
+         * Solo el dashboard admin se conecta aquí.
+         */
+        app.ws("/ws/dashboard", ws -> {
+            ws.onConnect(ctx -> {
+                wsGestion.subscribeDashboard(ctx);
+                System.out.println("WS dashboard connect: " + ctx.getSessionId());
+            });
+            ws.onClose(ctx -> {
+                wsGestion.unsubscribeDashboard(ctx);
+                wsGestion.cleanupSession(ctx.getSessionId());
+            });
+            ws.onError(ctx -> System.err.println("WS dashboard error: " + ctx.error()));
+        });
+
+        // ── Errores globales ────────────────────────────────────────────────
+        app.error(404, ctx -> ctx.result("Página no encontrada - 404"));
         app.exception(Exception.class, (e, ctx) -> {
-            ctx.status(500).result("Error: " + e.getMessage());
+            ctx.status(500).result("Error del servidor: " + e.getMessage());
             e.printStackTrace();
         });
 
-        System.out.println("Usuarios: " + usuarioGestion.todosLosUsuarios().size());
-        System.out.println("Productos: " + productoGestion.getListaProductos().size());
-        System.out.println("Servidor: http://localhost:8080");
-        System.out.println("H2 Console: http://localhost:8082");
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            //HibernateConsulta.detenerServidor();
-            productoGestion.shutdown();
-        }));
-
-        app = Javalin.create(config -> {
-            config.http.defaultContentType = "text/html; charset=UTF-8";
-        });
+        // ── Info de inicio ──────────────────────────────────────────────────
+        System.out.println("Usuarios cargados: " + usuarioGestion.todosLosUsuarios().size());
+        System.out.println("Productos cargados: " + productoGestion.getListaProductos().size());
+        System.out.println("Servidor HTTP/WS iniciado en el puerto 8080");
+        System.out.println("WebSockets disponibles:");
+        System.out.println("  ws://localhost:8080/ws/users");
+        System.out.println("  ws://localhost:8080/ws/comments/{productId}");
+        System.out.println("  ws://localhost:8080/ws/dashboard");
+        System.out.println("Sistema listo.\n");
     }
-
-
 }
