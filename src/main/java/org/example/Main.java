@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.rendering.template.JavalinThymeleaf;
 import com.google.gson.Gson;
+import org.h2.tools.Server;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,14 @@ import java.util.Map;
  */
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
+        try {
+            Server.createTcpServer("-tcp", "-tcpAllowOthers", "-tcpPort", "9092").start();
+            System.out.println("Servidor H2 iniciado en el puerto 9092");
+        } catch (Exception e) {
+            System.err.println("No se pudo iniciar el servidor H2: " + e.getMessage());
+        }
 
         // ── Servicios (Singleton) ────────────────────────────────────────────
         UsuarioGestion usuarioGestion = UsuarioGestion.getInstance();

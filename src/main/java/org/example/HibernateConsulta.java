@@ -29,7 +29,7 @@ public class HibernateConsulta {
             Configuration config = new Configuration();
 
             config.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
-            config.setProperty("hibernate.connection.url",          dbUrl);
+            config.setProperty("hibernate.connection.url", "jdbc:h2:tcp://localhost:9092/~/carritodb");
             config.setProperty("hibernate.connection.username",     dbUser);
             config.setProperty("hibernate.connection.password",     dbPass);
             config.setProperty("hibernate.dialect",                 "org.hibernate.dialect.H2Dialect");
