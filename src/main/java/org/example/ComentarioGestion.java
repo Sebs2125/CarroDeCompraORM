@@ -2,20 +2,15 @@ package org.example;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class ComentarioGestion {
 
     private static ComentarioGestion instance;
 
-    // productoId → lista de comentarios
+    // productoId (int) -> lista de comentarios en memoria para WS
     private final Map<Integer, List<Comentario>> comentariosPorProducto = new ConcurrentHashMap<>();
 
     private ComentarioGestion() {
-        // Comentarios de ejemplo
-        agregarComentario(new Comentario(1, "Sebastian", "Excelente RAM, muy rápida."));
-        agregarComentario(new Comentario(1, "Esmil", "Buena relación calidad-precio."));
-        agregarComentario(new Comentario(2, "admin", "Computadora muy potente para trabajo."));
     }
 
     public static synchronized ComentarioGestion getInstance() {
@@ -26,8 +21,9 @@ public class ComentarioGestion {
     }
 
     public void agregarComentario(Comentario comentario) {
+        int productoId = comentario.getProductoId();
         comentariosPorProducto
-                .computeIfAbsent(comentario.getProductoId(), k -> Collections.synchronizedList(new ArrayList<>()))
+                .computeIfAbsent(productoId, k -> Collections.synchronizedList(new ArrayList<>()))
                 .add(comentario);
     }
 
@@ -35,22 +31,20 @@ public class ComentarioGestion {
         return comentariosPorProducto.getOrDefault(productoId, Collections.emptyList());
     }
 
-    public Optional<Comentario> buscarPorId(int id) {
+    public Optional<Comentario> buscarPorId(Long id) {
         return comentariosPorProducto.values().stream()
                 .flatMap(List::stream)
-                .filter(c -> c.getId() == id)
+                .filter(c -> c.getId() != null && c.getId().equals(id))
                 .findFirst();
     }
 
-    /**
-     * Elimina el comentario y retorna el productoId al que pertenecía,
-     * o -1 si no existe.
-     */
-    public int eliminarComentario(int comentarioId) {
+    public int eliminarComentario(Long comentarioId) {
         for (Map.Entry<Integer, List<Comentario>> entry : comentariosPorProducto.entrySet()) {
-            boolean removed = entry.getValue().removeIf(c -> c.getId() == comentarioId);
+            boolean removed = entry.getValue()
+                    .removeIf(c -> c.getId() != null && c.getId().equals(comentarioId));
             if (removed) {
-                System.out.println("Comentario eliminado ID: " + comentarioId + " del producto: " + entry.getKey());
+                System.out.println("Comentario eliminado del cache ID: "
+                        + comentarioId + " del producto: " + entry.getKey());
                 return entry.getKey();
             }
         }
