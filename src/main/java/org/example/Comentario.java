@@ -13,26 +13,22 @@ public class Comentario
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relacion con Producto — requerida por ProductoGestion.agregarComentario()
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "producto_id")
     private Producto producto;
 
-    // Relacion con Usuario — requerida por ProductoGestion.agregarComentario()
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    @Column(columnDefinition = "TEXT")
+    // Mapeado a la columna "contenido" que ya existe en la BD
+    @Column(name = "contenido", columnDefinition = "TEXT")
     private String texto;
 
     private String fecha;
 
-    // ── Constructores
-
     public Comentario() {}
 
-    /** Constructor JPA con relaciones a entidades */
     public Comentario(Producto producto, Usuario usuario, String texto) {
         this.producto = producto;
         this.usuario  = usuario;
@@ -40,8 +36,6 @@ public class Comentario
         this.fecha    = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
-
-    // ── Getters y Setters
 
     public Long getId()            { return id; }
     public void setId(Long id)     { this.id = id; }
@@ -57,8 +51,6 @@ public class Comentario
 
     public String getFecha()           { return fecha; }
     public void setFecha(String fecha) { this.fecha = fecha; }
-
-    // ── Metodos de conveniencia
 
     public String getAutor() {
         return usuario != null ? usuario.getNombre() : "Anonimo";

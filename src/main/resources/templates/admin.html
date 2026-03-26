@@ -18,34 +18,43 @@
         <a href="/productos" class="text-decoration-none">Comprar</a>
         <a href="/ventas"    class="text-decoration-none">Ventas</a>
         <a href="/admin"     class="text-decoration-none fw-bold text-dark">Admin Productos</a>
-        <a href="/dashboard" class="text-decoration-none text-success fw-bold">📊 Dashboard</a>
+        <a href="/dashboard" class="text-decoration-none text-success fw-bold">Dashboard</a>
         <span class="text-muted" th:if="${usuario != null}" th:text="${usuario.nombre}">Admin</span>
         <a href="/logout"    class="text-decoration-none text-danger fw-bold">Salir</a>
-
-        <!-- Contador usuarios en línea -->
         <span class="badge bg-primary">
-            <span id="onlineCount">–</span> en línea
+            <span id="onlineCount">-</span> en linea
         </span>
     </div>
 </nav>
 
-<h2 class="mb-4">Administración de Productos</h2>
+<h2 class="mb-4">Administracion de Productos</h2>
 
 <!-- Crear nuevo producto -->
 <div class="bg-light p-4 rounded mb-4">
     <h5 class="mb-3">Registrar Nuevo Producto</h5>
-    <form action="/admin/productos" method="post" class="row g-3">
-        <div class="col-md-4">
-            <input type="text" name="nombre" class="form-control" placeholder="Nombre" required>
+    <form action="/admin/productos" method="post" enctype="multipart/form-data" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Nombre</label>
+            <input type="text" name="nombre" class="form-control" placeholder="Nombre del producto" required>
         </div>
         <div class="col-md-2">
-            <input type="number" step="0.01" name="precio" class="form-control" placeholder="Precio" required>
+            <label class="form-label fw-bold">Precio (RD$)</label>
+            <input type="number" step="0.01" name="precio" class="form-control" placeholder="0.00" required>
+        </div>
+        <div class="col-md-1">
+            <label class="form-label fw-bold">Stock</label>
+            <input type="number" name="inventario" class="form-control" placeholder="0" required>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Descripcion</label>
+            <textarea name="descripcion" class="form-control" rows="1" placeholder="Descripcion del producto"></textarea>
         </div>
         <div class="col-md-2">
-            <input type="number" name="inventario" class="form-control" placeholder="Stock" required>
+            <label class="form-label fw-bold">Imagen</label>
+            <input type="file" name="imagen" class="form-control" accept="image/*" required>
         </div>
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Crear Producto</button>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Crear</button>
         </div>
     </form>
 </div>
@@ -55,7 +64,9 @@
     <thead class="table-secondary">
     <tr>
         <th>ID</th>
+        <th>Imagen</th>
         <th>Nombre</th>
+        <th>Descripcion</th>
         <th>Precio (RD$)</th>
         <th>Stock</th>
         <th>Acciones</th>
@@ -65,8 +76,20 @@
     <tr th:each="p : ${productos}">
         <td th:text="${p.id}"></td>
         <td>
+            <img th:if="${p.imagenBase64 != null}"
+                 th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
+                 style="width:60px;height:45px;object-fit:cover;border-radius:4px;" alt="img">
+            <span th:if="${p.imagenBase64 == null}" class="text-muted small">Sin imagen</span>
+        </td>
+        <td>
             <a th:href="'/productos/' + ${p.id}" th:text="${p.nombre}"
                class="text-decoration-none"></a>
+        </td>
+        <td>
+            <span th:if="${p.descripcion != null}"
+                  th:text="${#strings.abbreviate(p.descripcion, 50)}"
+                  class="small text-muted"></span>
+            <span th:if="${p.descripcion == null}" class="text-muted small">-</span>
         </td>
         <td th:text="${p.precio}"></td>
         <td th:text="${p.inventario}"></td>
@@ -81,33 +104,54 @@
             <!-- Eliminar producto -->
             <form th:action="'/admin/productos/' + ${p.id} + '/delete'" method="post" style="display:inline;">
                 <button type="submit" class="btn btn-danger btn-sm"
-                        onclick="return confirm('¿Eliminar este producto?')">
+                        onclick="return confirm('Eliminar este producto?')">
                     Eliminar
                 </button>
             </form>
 
-            <!-- Ver comentarios del producto -->
+            <!-- Ver comentarios -->
             <a th:href="'/productos/' + ${p.id}" class="btn btn-outline-secondary btn-sm">
-                Ver comentarios
+                Comentarios
             </a>
 
             <!-- Modal Editar -->
             <div class="modal fade" th:id="'modalEditar' + ${p.id}" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header bg-warning">
                             <h5 class="modal-title text-dark">Editar Producto</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <form th:action="'/admin/productos/' + ${p.id} + '/update'" method="post">
+                        <form th:action="'/admin/productos/' + ${p.id} + '/update'" method="post"
+                              enctype="multipart/form-data">
                             <div class="modal-body text-start">
                                 <input type="hidden" name="id" th:value="${p.id}">
+
                                 <label class="fw-bold mt-2">Nombre:</label>
-                                <input type="text" name="nombre" th:value="${p.nombre}" class="form-control" required>
-                                <label class="fw-bold mt-2">Precio:</label>
-                                <input type="number" step="0.01" name="precio" th:value="${p.precio}" class="form-control" required>
+                                <input type="text" name="nombre" th:value="${p.nombre}"
+                                       class="form-control" required>
+
+                                <label class="fw-bold mt-2">Precio (RD$):</label>
+                                <input type="number" step="0.01" name="precio" th:value="${p.precio}"
+                                       class="form-control" required>
+
                                 <label class="fw-bold mt-2">Stock:</label>
-                                <input type="number" name="inventario" th:value="${p.inventario}" class="form-control" required>
+                                <input type="number" name="inventario" th:value="${p.inventario}"
+                                       class="form-control" required>
+
+                                <label class="fw-bold mt-2">Descripcion:</label>
+                                <textarea name="descripcion" class="form-control" rows="2"
+                                          th:text="${p.descripcion}"></textarea>
+
+                                <label class="fw-bold mt-2">Nueva imagen (opcional):</label>
+                                <input type="file" name="imagen" class="form-control" accept="image/*">
+                                <small class="text-muted">Dejar vacio para conservar la imagen actual.</small>
+
+                                <div th:if="${p.imagenBase64 != null}" class="mt-2">
+                                    <small class="text-muted">Imagen actual:</small><br>
+                                    <img th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
+                                         style="max-height:80px;border-radius:4px;" alt="actual">
+                                </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

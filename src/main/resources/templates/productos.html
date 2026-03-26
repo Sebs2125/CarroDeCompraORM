@@ -7,6 +7,34 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { padding: 20px; }
+        .producto-link {
+            color: #0d6efd;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .producto-link:hover {
+            text-decoration: underline;
+            color: #0a58ca;
+        }
+        .producto-img {
+            width: 72px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        .sin-img {
+            width: 72px;
+            height: 54px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #aaa;
+            border: 1px solid #dee2e6;
+        }
     </style>
 </head>
 
@@ -16,7 +44,7 @@
     <a class="navbar-brand fw-bold fs-4" href="/productos">Carrito Compra</a>
     <div class="d-flex align-items-center gap-3">
         <a href="/productos" class="me-1 text-decoration-none fw-bold text-dark">Comprar</a>
-        <a href="/ventas"   class="text-decoration-none">Ventas Realizadas</a>
+        <a href="/ventas" class="text-decoration-none">Ventas Realizadas</a>
 
         <a th:if="${usuario != null && usuario.confirmarAdmin}"
            href="/admin" class="text-decoration-none">Admin Productos</a>
@@ -25,7 +53,7 @@
            href="/dashboard" class="text-decoration-none">Dashboard</a>
 
         <a th:if="${usuario == null}"
-           href="/login" class="text-decoration-none text-primary fw-bold">Iniciar Sesión</a>
+           href="/login" class="text-decoration-none text-primary fw-bold">Iniciar Sesion</a>
 
         <th:block th:if="${usuario != null}">
             <span class="text-muted" th:text="${usuario.nombre}">Usuario</span>
@@ -33,9 +61,8 @@
             <a href="/logout" class="text-decoration-none text-danger fw-bold">Salir</a>
         </th:block>
 
-        <!-- Req #2: Contador de usuarios logueados en tiempo real -->
         <span class="badge bg-primary ms-2" title="Usuarios logueados ahora">
-            <span id="onlineCount">–</span> en línea
+            <span id="onlineCount">-</span> en linea
         </span>
     </div>
 </nav>
@@ -45,31 +72,54 @@
 <table class="table table-bordered table-striped align-middle">
     <thead class="table-light">
     <tr>
+        <th style="width:90px;">Imagen</th>
         <th>Producto</th>
-        <th>Precio (RD$)</th>
-        <th>Stock</th>
-        <th>Agregar</th>
+        <th style="width:130px;">Precio (RD$)</th>
+        <th style="width:110px;">Stock</th>
+        <th style="width:200px;">Agregar</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="p : ${productos}">
+
+        <!-- Imagen clickeable -->
         <td>
-            <!-- Link al detalle del producto (con comentarios) -->
+            <a th:href="'/productos/' + ${p.id}">
+                <img th:if="${p.imagenBase64 != null and !#strings.isEmpty(p.imagenBase64)}"
+                     th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
+                     class="producto-img" alt="img">
+                <div th:if="${p.imagenBase64 == null or #strings.isEmpty(p.imagenBase64)}"
+                     class="sin-img">Sin imagen</div>
+            </a>
+        </td>
+
+        <!-- Nombre en azul clickeable + descripcion -->
+        <td>
             <a th:href="'/productos/' + ${p.id}"
                th:text="${p.nombre}"
-               class="text-decoration-none text-dark fw-bold"></a>
+               class="producto-link"></a>
+            <br th:if="${p.descripcion != null and !#strings.isEmpty(p.descripcion)}">
+            <small th:if="${p.descripcion != null and !#strings.isEmpty(p.descripcion)}"
+                   th:text="${#strings.abbreviate(p.descripcion, 70)}"
+                   class="text-muted"></small>
         </td>
+
+        <!-- Precio -->
         <td th:text="${p.precio}"></td>
+
+        <!-- Stock -->
         <td>
             <span class="badge"
                   th:classappend="${p.inventario > 0} ? 'bg-success' : 'bg-danger'"
                   th:text="${p.inventario} + ' uds.'"></span>
         </td>
+
+        <!-- Agregar al carrito -->
         <td>
             <form action="/carrito/add" method="post" class="d-flex gap-2">
                 <input type="hidden" name="productoId" th:value="${p.id}">
                 <input type="number" name="cantidad" value="1" min="1"
-                       class="form-control form-control-sm w-25">
+                       class="form-control form-control-sm" style="width:65px;">
                 <button type="submit"
                         class="btn btn-success btn-sm"
                         th:disabled="${usuario == null}">Agregar</button>
@@ -79,23 +129,34 @@
     </tbody>
 </table>
 
+<!-- Paginacion -->
+<nav th:if="${totalPaginas > 1}">
+    <ul class="pagination">
+        <li class="page-item" th:classappend="${!hayAnterior} ? 'disabled'">
+            <a class="page-link" th:href="'/productos?page=' + ${paginaActual - 1}">Anterior</a>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link" th:text="${paginaActual} + ' / ' + ${totalPaginas}"></span>
+        </li>
+        <li class="page-item" th:classappend="${!haySiguiente} ? 'disabled'">
+            <a class="page-link" th:href="'/productos?page=' + ${paginaActual + 1}">Siguiente</a>
+        </li>
+    </ul>
+</nav>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     var USERNAME = /*[[${usuario != null ? usuario.nombre : ''}]]*/ '';
 
-    // ─── WebSocket: contador de usuarios en línea (Req #2) ──────────────────
     var wsUsers;
     function connectUsersWS() {
         var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
         wsUsers = new WebSocket(proto + '//' + location.host + '/ws/users');
-
         wsUsers.onopen = function() {
-            // Si hay un usuario logueado, notificar al servidor
             if (USERNAME) {
                 wsUsers.send(JSON.stringify({ action: 'login', username: USERNAME }));
             }
         };
-
         wsUsers.onmessage = function(event) {
             try {
                 var msg = JSON.parse(event.data);
@@ -104,20 +165,12 @@
                 }
             } catch(e) { console.error('WS parse error', e); }
         };
-
-        wsUsers.onclose = function() {
-            // Reconexión automática
-            setTimeout(connectUsersWS, 3000);
-        };
-
-        wsUsers.onerror = function(err) {
-            console.error('WS users error:', err);
-        };
+        wsUsers.onclose = function() { setTimeout(connectUsersWS, 3000); };
+        wsUsers.onerror = function(err) { console.error('WS users error:', err); };
     }
 
     connectUsersWS();
 
-    // Al salir de la página, notificar logout del contador
     window.addEventListener('beforeunload', function() {
         if (wsUsers && wsUsers.readyState === WebSocket.OPEN) {
             wsUsers.send(JSON.stringify({ action: 'logout' }));

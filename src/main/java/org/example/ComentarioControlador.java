@@ -26,14 +26,14 @@ public class ComentarioControlador {
 
         Map<String, Object> modelo = new HashMap<>();
         modelo.put("producto",    producto);
-        // Los comentarios vienen de la relacion @OneToMany de Hibernate
         modelo.put("comentarios", producto.getComentarios());
         modelo.put("usuario",     ctx.sessionAttribute("usuarioActual"));
         modelo.put("esAdmin",
                 ctx.sessionAttribute("usuarioActual") != null
                         && ((Usuario) ctx.sessionAttribute("usuarioActual")).isConfirmarAdmin());
 
-        ctx.render("/templates/producto_detalle.html", modelo);
+        // CORRECCION: nombre de template usa guion, no underscore
+        ctx.render("/templates/producto-detalle.html", modelo);
     }
 
 
@@ -53,26 +53,20 @@ public class ComentarioControlador {
             return;
         }
 
-        // Obtener la entidad Producto para la relacion JPA
         Producto producto = productoGestion.obtenerProductoPorId(productoId).orElse(null);
         if (producto == null) {
             ctx.status(404).result("Producto no encontrado");
             return;
         }
 
-        // CAMBIO: constructor JPA new Comentario(Producto, Usuario, String)
         Comentario comentario = new Comentario(producto, usuario, texto.trim());
 
-        // Persistir en BD via ProductoGestion (Hibernate)
         productoGestion.agregarComentario(comentario);
-
-        // Registrar en cache en memoria para WS
         comentarioGestion.agregarComentario(comentario);
 
         System.out.println("Comentario agregado por " + usuario.getUsuario()
                 + " en producto " + productoId);
 
-        // Broadcast WebSocket a todos los que ven ese producto
         broadcastNuevoComentario(productoId.intValue(), comentario);
 
         ctx.redirect("/productos/" + productoId);
@@ -85,20 +79,12 @@ public class ComentarioControlador {
             return;
         }
 
-        // CAMBIO: Long para coincidir con ProductoGestion.eliminarComentario(Long)
         Long comentarioId = Long.parseLong(ctx.pathParam("id"));
 
-        // Eliminar del cache en memoria y obtener el productoId para el broadcast
         int productoId = comentarioGestion.eliminarComentario(comentarioId);
 
-        // Si no estaba en cache, buscar el productoId directamente en BD
-        // antes de eliminarlo
         if (productoId == -1) {
-            // Intentar obtener productoId desde la BD antes de borrar
-            // (el productoId se recupera del comentario antes de eliminarlo)
             try {
-                // Buscar el comentario para saber a qué producto pertenece
-                // Se elimina por ProductoGestion que hace el find antes del remove
                 productoGestion.eliminarComentario(comentarioId);
             } catch (Exception e) {
                 ctx.status(404).result("Comentario no encontrado");
@@ -108,10 +94,7 @@ public class ComentarioControlador {
             return;
         }
 
-        // Eliminar de la BD
         productoGestion.eliminarComentario(comentarioId);
-
-        // WebSocket: notificar en tiempo real
         wsGestion.broadcastCommentDeleted(productoId, comentarioId.intValue());
 
         System.out.println("Admin elimino comentario ID: " + comentarioId
@@ -130,7 +113,7 @@ public class ComentarioControlador {
         msg.put("type",      "comment_added");
         msg.put("commentId", comentario.getId());
         msg.put("productId", productoId);
-        msg.put("autor",     comentario.getAutor());   // getAutor() devuelve usuario.getNombre()
+        msg.put("autor",     comentario.getAutor());
         msg.put("texto",     comentario.getTexto());
         msg.put("fecha",     comentario.getFecha());
         String json = gson.toJson(msg);
