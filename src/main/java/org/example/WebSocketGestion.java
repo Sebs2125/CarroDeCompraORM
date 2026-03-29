@@ -6,20 +6,17 @@ import com.google.gson.Gson;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+
 /**
  * Hub central de WebSockets.
  * Maneja tres tipos de canales:
  *   - "users"     → transmite conteo de usuarios logueados en tiempo real
  *   - "comments"  → transmite eliminación de comentarios en tiempo real
  *   - "dashboard" → transmite actualizaciones de ventas en tiempo real
- *
- * CORRECCIONES aplicadas:
- *   1. Archivo renombrado a WebSocketGestion.java (G mayúscula) para coincidir
- *      con el nombre de la clase publica — Java exige que sean identicos.
- *   2. Eliminadas todas las llamadas a ctx.session.isOpen() porque WsContext
- *      en Javalin 5 no expone .session como campo publico. Las excepciones al
- *      hacer .send() sobre conexiones cerradas quedan capturadas por el catch.
  */
+
+
 public class WebSocketGestion
 {
 
@@ -35,8 +32,11 @@ public class WebSocketGestion
     // Canal: dashboard de ventas  sessionId -> WsContext
     private final Map<String, WsContext> dashboardSubs = new ConcurrentHashMap<>();
 
-    // Usuarios logueados activos: sessionId -> nombre
-    private final Map<String, String> activeUsers = new ConcurrentHashMap<>();
+
+    private final Map<String, Set<String>> activeUsers = new ConcurrentHashMap<>();
+
+    // Índice inverso para poder buscar el username de un sessionId en O(1)
+    private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
 
     private WebSocketGestion() {}
 
@@ -78,19 +78,44 @@ public class WebSocketGestion
     }
 
     // ─────────────────────────────────────────────
-    //  Gestion de usuarios activos
+    //  Gestión de usuarios activos (CORREGIDO)
     // ─────────────────────────────────────────────
 
     public void userLoggedIn(String sessionId, String username) {
-        activeUsers.put(sessionId, username);
+        if (username == null || username.isBlank()) return;
+
+        // Si este sessionId ya tenía otro usuario asociado, limpiarlo primero
+        String prevUser = sessionToUser.put(sessionId, username);
+        if (prevUser != null && !prevUser.equals(username)) {
+            removeSessionFromUser(sessionId, prevUser);
+        }
+
+        // Agregar sessionId al Set del usuario
+        activeUsers.computeIfAbsent(username, k -> ConcurrentHashMap.newKeySet()).add(sessionId);
+
         broadcastUserCount();
     }
 
     public void userLoggedOut(String sessionId) {
-        activeUsers.remove(sessionId);
-        broadcastUserCount();
+        String username = sessionToUser.remove(sessionId);
+        if (username != null) {
+            removeSessionFromUser(sessionId, username);
+            broadcastUserCount();
+        }
     }
 
+    /** Elimina sessionId del Set del usuario; si queda vacío, elimina la entrada del mapa. */
+    private void removeSessionFromUser(String sessionId, String username) {
+        Set<String> sessions = activeUsers.get(username);
+        if (sessions != null) {
+            sessions.remove(sessionId);
+            if (sessions.isEmpty()) {
+                activeUsers.remove(username, sessions);
+            }
+        }
+    }
+
+    /** Cantidad de usuarios ÚNICOS logueados (no número de tabs/conexiones WS). */
     public int getActiveUserCount() {
         return activeUsers.size();
     }
@@ -150,6 +175,10 @@ public class WebSocketGestion
     }
 
     public void cleanupSession(String sessionId) {
+        // Limpiar usuario activo
+        userLoggedOut(sessionId);
+
+        // Limpiar suscripciones
         userCountSubs.remove(sessionId);
         dashboardSubs.remove(sessionId);
         commentSubs.values().forEach(set ->
