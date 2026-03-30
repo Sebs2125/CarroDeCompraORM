@@ -29,7 +29,6 @@
 
 <h2 class="mb-4">Administracion de Productos</h2>
 
-<!-- Crear nuevo producto -->
 <div class="bg-light p-4 rounded mb-4">
     <h5 class="mb-3">Registrar Nuevo Producto</h5>
     <form action="/admin/productos" method="post" enctype="multipart/form-data" class="row g-3">
@@ -59,7 +58,6 @@
     </form>
 </div>
 
-<!-- Tabla de productos -->
 <table class="table table-sm table-bordered align-middle">
     <thead class="table-secondary">
     <tr>
@@ -94,27 +92,20 @@
         <td th:text="${p.precio}"></td>
         <td th:text="${p.inventario}"></td>
         <td>
-            <!-- Editar -->
             <button type="button" class="btn btn-warning btn-sm"
                     data-bs-toggle="modal"
                     th:data-bs-target="'#modalEditar' + ${p.id}">
                 Editar
             </button>
-
-            <!-- Eliminar producto -->
             <form th:action="'/admin/productos/' + ${p.id} + '/delete'" method="post" style="display:inline;">
                 <button type="submit" class="btn btn-danger btn-sm"
                         onclick="return confirm('Eliminar este producto?')">
                     Eliminar
                 </button>
             </form>
-
-            <!-- Ver comentarios -->
             <a th:href="'/productos/' + ${p.id}" class="btn btn-outline-secondary btn-sm">
                 Comentarios
             </a>
-
-            <!-- Modal Editar -->
             <div class="modal fade" th:id="'modalEditar' + ${p.id}" tabindex="-1">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
@@ -126,27 +117,21 @@
                               enctype="multipart/form-data">
                             <div class="modal-body text-start">
                                 <input type="hidden" name="id" th:value="${p.id}">
-
                                 <label class="fw-bold mt-2">Nombre:</label>
                                 <input type="text" name="nombre" th:value="${p.nombre}"
                                        class="form-control" required>
-
                                 <label class="fw-bold mt-2">Precio (RD$):</label>
                                 <input type="number" step="0.01" name="precio" th:value="${p.precio}"
                                        class="form-control" required>
-
                                 <label class="fw-bold mt-2">Stock:</label>
                                 <input type="number" name="inventario" th:value="${p.inventario}"
                                        class="form-control" required>
-
                                 <label class="fw-bold mt-2">Descripcion:</label>
                                 <textarea name="descripcion" class="form-control" rows="2"
                                           th:text="${p.descripcion}"></textarea>
-
                                 <label class="fw-bold mt-2">Nueva imagen (opcional):</label>
                                 <input type="file" name="imagen" class="form-control" accept="image/*">
                                 <small class="text-muted">Dejar vacio para conservar la imagen actual.</small>
-
                                 <div th:if="${p.imagenBase64 != null}" class="mt-2">
                                     <small class="text-muted">Imagen actual:</small><br>
                                     <img th:src="'data:image/jpeg;base64,' + ${p.imagenBase64}"
@@ -171,12 +156,22 @@
     var USERNAME = /*[[${usuario != null ? usuario.nombre : ''}]]*/ '';
 
     var wsUsers;
+    var wsRetryDelay = 1000;
+    var wsRetryTimer = null;
+
     function connectUsersWS() {
+        if (wsRetryTimer) { clearTimeout(wsRetryTimer); wsRetryTimer = null; }
+
         var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
         wsUsers = new WebSocket(proto + '//' + location.host + '/ws/users');
+
         wsUsers.onopen = function() {
-            if (USERNAME) wsUsers.send(JSON.stringify({ action: 'login', username: USERNAME }));
+            wsRetryDelay = 1000;
+            if (USERNAME) {
+                wsUsers.send(JSON.stringify({ action: 'login', username: USERNAME }));
+            }
         };
+
         wsUsers.onmessage = function(event) {
             try {
                 var msg = JSON.parse(event.data);
@@ -185,12 +180,23 @@
                 }
             } catch(e) {}
         };
-        wsUsers.onclose = function() { setTimeout(connectUsersWS, 3000); };
+
+        wsUsers.onclose = function() {
+            wsRetryDelay = Math.min(wsRetryDelay * 2, 30000);
+            wsRetryTimer = setTimeout(connectUsersWS, wsRetryDelay);
+        };
+
+        wsUsers.onerror = function() { /* manejado por onclose */ };
     }
+
     connectUsersWS();
+
     window.addEventListener('beforeunload', function() {
-        if (wsUsers && wsUsers.readyState === WebSocket.OPEN)
+        if (wsRetryTimer) clearTimeout(wsRetryTimer);
+        if (wsUsers && wsUsers.readyState === WebSocket.OPEN) {
             wsUsers.send(JSON.stringify({ action: 'logout' }));
+            wsUsers.close();
+        }
     });
 </script>
 </body>

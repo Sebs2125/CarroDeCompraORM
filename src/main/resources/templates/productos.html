@@ -81,8 +81,6 @@
     </thead>
     <tbody>
     <tr th:each="p : ${productos}">
-
-        <!-- Imagen clickeable -->
         <td>
             <a th:href="'/productos/' + ${p.id}">
                 <img th:if="${p.imagenBase64 != null and !#strings.isEmpty(p.imagenBase64)}"
@@ -92,8 +90,6 @@
                      class="sin-img">Sin imagen</div>
             </a>
         </td>
-
-        <!-- Nombre en azul clickeable + descripcion -->
         <td>
             <a th:href="'/productos/' + ${p.id}"
                th:text="${p.nombre}"
@@ -103,18 +99,12 @@
                    th:text="${#strings.abbreviate(p.descripcion, 70)}"
                    class="text-muted"></small>
         </td>
-
-        <!-- Precio -->
         <td th:text="${p.precio}"></td>
-
-        <!-- Stock -->
         <td>
             <span class="badge"
                   th:classappend="${p.inventario > 0} ? 'bg-success' : 'bg-danger'"
                   th:text="${p.inventario} + ' uds.'"></span>
         </td>
-
-        <!-- Agregar al carrito -->
         <td>
             <form action="/carrito/add" method="post" class="d-flex gap-2">
                 <input type="hidden" name="productoId" th:value="${p.id}">
@@ -129,7 +119,6 @@
     </tbody>
 </table>
 
-<!-- Paginacion -->
 <nav th:if="${totalPaginas > 1}">
     <ul class="pagination">
         <li class="page-item" th:classappend="${!hayAnterior} ? 'disabled'">
@@ -149,31 +138,46 @@
     var USERNAME = /*[[${usuario != null ? usuario.nombre : ''}]]*/ '';
 
     var wsUsers;
+    var wsRetryDelay = 1000;
+    var wsRetryTimer = null;
+
     function connectUsersWS() {
+        if (wsRetryTimer) { clearTimeout(wsRetryTimer); wsRetryTimer = null; }
+
         var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
         wsUsers = new WebSocket(proto + '//' + location.host + '/ws/users');
+
         wsUsers.onopen = function() {
+            wsRetryDelay = 1000;
             if (USERNAME) {
                 wsUsers.send(JSON.stringify({ action: 'login', username: USERNAME }));
             }
         };
+
         wsUsers.onmessage = function(event) {
             try {
                 var msg = JSON.parse(event.data);
                 if (msg.type === 'user_count') {
                     document.getElementById('onlineCount').textContent = msg.count;
                 }
-            } catch(e) { console.error('WS parse error', e); }
+            } catch(e) {}
         };
-        wsUsers.onclose = function() { setTimeout(connectUsersWS, 3000); };
-        wsUsers.onerror = function(err) { console.error('WS users error:', err); };
+
+        wsUsers.onclose = function() {
+            wsRetryDelay = Math.min(wsRetryDelay * 2, 30000);
+            wsRetryTimer = setTimeout(connectUsersWS, wsRetryDelay);
+        };
+
+        wsUsers.onerror = function() { /* manejado por onclose */ };
     }
 
     connectUsersWS();
 
     window.addEventListener('beforeunload', function() {
+        if (wsRetryTimer) clearTimeout(wsRetryTimer);
         if (wsUsers && wsUsers.readyState === WebSocket.OPEN) {
             wsUsers.send(JSON.stringify({ action: 'logout' }));
+            wsUsers.close();
         }
     });
 </script>

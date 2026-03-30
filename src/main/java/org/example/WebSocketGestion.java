@@ -5,9 +5,6 @@ import com.google.gson.Gson;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-
-
 /**
  * Hub central de WebSockets.
  * Maneja tres tipos de canales:
@@ -15,8 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *   - "comments"  → transmite eliminación de comentarios en tiempo real
  *   - "dashboard" → transmite actualizaciones de ventas en tiempo real
  */
-
-
 public class WebSocketGestion
 {
 
@@ -31,7 +26,6 @@ public class WebSocketGestion
 
     // Canal: dashboard de ventas  sessionId -> WsContext
     private final Map<String, WsContext> dashboardSubs = new ConcurrentHashMap<>();
-
 
     private final Map<String, Set<String>> activeUsers = new ConcurrentHashMap<>();
 
