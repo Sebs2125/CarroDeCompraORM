@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Tienda Marcar - Carrito</title>
+    <title>Tienda - Carrito</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { padding: 20px; }
@@ -33,19 +33,17 @@
 
 <h2 class="mb-4">Carrito de Compra</h2>
 
-<!-- Carrito vacío -->
+<!-- Carrito vacio -->
 <div th:if="${#lists.isEmpty(productos)}" class="text-center text-muted py-5">
-    <p class="fs-5">Tu carrito está vacío.</p>
+    <p class="fs-5">Tu carrito esta vacio.</p>
     <a href="/productos" class="btn btn-primary btn-sm">Ver productos</a>
 </div>
 
 <!-- Carrito con productos -->
 <div th:if="${!#lists.isEmpty(productos)}">
 
-    <!-- Todo dentro de un solo form -->
     <form action="/carrito/procesar" method="post" onsubmit="return validarCliente()">
 
-        <!-- Nombre del cliente DENTRO del form -->
         <div class="mb-3">
             <label class="fw-bold" for="nombreCliente">Nombre del Cliente:</label>
             <input type="text" id="nombreCliente" name="nombreCliente"
@@ -80,7 +78,6 @@
 
     </form>
 
-    <!-- Limpiar carrito va en su propio form separado -->
     <form action="/carrito/limpiar" method="post" class="mt-2">
         <button type="submit" class="btn btn-outline-secondary">Limpiar Carrito</button>
     </form>

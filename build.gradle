@@ -6,35 +6,35 @@ plugins {
 group = 'org.example'
 version = '1.0-SNAPSHOT'
 
-application {
-    mainClass = 'org.example.Main'
-}
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
 
-    implementation("io.javalin:javalin:6.7.0") //Javalin
-    implementation 'io.javalin:javalin-rendering:6.7.0'
-    implementation 'org.thymeleaf:thymeleaf:3.1.2.RELEASE'
+    // ── Javalin (incluye WebSocket via Jetty internamente) ──────────────────
+    implementation 'io.javalin:javalin:5.6.3'
     implementation 'io.javalin:javalin-rendering:5.6.3'
 
-    implementation 'org.slf4j:slf4j-simple:2.0.7' //SLF4J
+    // ── Thymeleaf ────────────────────────────────────────────────────────────
+    implementation 'org.thymeleaf:thymeleaf:3.1.2.RELEASE'
 
-    implementation 'org.hibernate.orm:hibernate-core:6.6.0.Final' //Hibernate
-    implementation 'com.h2database:h2:2.3.232' //H2
-    implementation 'org.postgresql:postgresql:42.7.3'
+    // ── Logging ──────────────────────────────────────────────────────────────
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
 
-    implementation 'org.jasypt:jasypt:1.9.3'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    // ── JSON (Gson para serializar mensajes WebSocket) ───────────────────────
+    implementation 'com.google.code.gson:gson:2.10.1'
 
+    // ── Hibernate ORM (incluye jakarta.persistence: @Entity, @Id, @Column…) ──
+    implementation 'org.hibernate.orm:hibernate-core:6.4.4.Final'
+
+    // ── H2 Database (modo servidor TCP para Docker) ───────────────────────────
+    implementation 'com.h2database:h2:2.2.224'
+
+    // ── Tests ─────────────────────────────────────────────────────────────────
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    implementation 'com.google.code.gson:gson:2.10.1' //Gson para JSON
 
 }
 
@@ -46,16 +46,11 @@ jar {
     manifest {
         attributes 'Main-Class': 'org.example.Main'
     }
-    // Incluir todas las dependencias en el JAR (Fat JAR)
+    // Fat JAR — incluye todas las dependencias
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
 }
 
 test {

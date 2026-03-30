@@ -21,35 +21,37 @@ public class AutenticarUsuarioControlador {
     public void login(Context ctx) {
         String usuario = ctx.formParam("usuario");
         String password = ctx.formParam("password");
+        String recordar = ctx.formParam("recordar");
 
         Usuario user = usuarioGestion.autenticarUsuario(usuario, password).orElse(null);
 
-        if (user != null) {
-            // CORREGIDO: Usamos "usuarioActual" para que coincida con ProductoControlador
+        if ( user != null )
+        {
             ctx.sessionAttribute("usuarioActual", user);
 
-            System.out
-                    .println("Usuario autenticado: " + user.getUsuario() + " (Admin: " + user.isConfirmarAdmin() + ")");
-
-            if (user.isConfirmarAdmin()) {
-                ctx.redirect("/admin");
-            } else {
-                ctx.redirect("/productos");
+            if ( "true".equals(recordar) || "on".equals(recordar) )
+            {
+                String token = ServicioCookies.generarRecordarUsuarioToken(user.getUsuario());
+                ctx.cookie("recordarUsuario", token, 7*24*60*60); //1 semana de datos
             }
-        } else {
-            System.out.println("Intento de login fallido para: " + usuario);
+
+            String ip = ctx.ip();
+            String userAgent = ctx.userAgent();
+            new ManejoDeLoginConsulta().registrarLogin(user.getUsuario(), ip, userAgent);
+
+            ctx.redirect(user.isConfirmarAdmin() ? "/admin" : "/productos");
+
+        }
+        else
+        {
             ctx.redirect("/login?error=true");
         }
+
     }
 
-    public void logout(Context ctx) {
-        // CORREGIDO: Usamos "usuarioActual"
-        Usuario usuarioActual = ctx.sessionAttribute("usuarioActual");
-
-        if (usuarioActual != null) {
-            System.out.println("Usuario desconectado: " + usuarioActual.getUsuario());
-        }
-
+    public void logout(Context ctx)
+    {
+        ctx.cookie("recordarUsuario", "", 0);
         ctx.req().getSession().invalidate();
         ctx.redirect("/productos");
     }

@@ -1,82 +1,62 @@
 package org.example;
 
 import jakarta.persistence.*;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-/*
-Puntos 6 y 7:
-6- Se permiten comentarios en los productos.
-7- Los administradores pueden eliminar comentarios de manera ofensiva
- */
+import java.time.format.DateTimeFormatter;
 
 @Entity
+@Table(name = "comentario")
 public class Comentario
 {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "producto_id")
     private Producto producto;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    @Column( columnDefinition = "TEXT")
-    private String contenido;
+    // Mapeado a la columna "contenido" que ya existe en la BD
+    @Column(name = "contenido", columnDefinition = "TEXT")
+    private String texto;
 
-    private LocalDateTime fecha = LocalDateTime.now();
+    private String fecha;
 
     public Comentario() {}
 
-    public Comentario ( Producto producto, Usuario usuario, String contenido )
-    {
+    public Comentario(Producto producto, Usuario usuario, String texto) {
         this.producto = producto;
-        this.usuario = usuario;
-        this.contenido = contenido;
-        this.fecha = LocalDateTime.now();
+        this.usuario  = usuario;
+        this.texto    = texto;
+        this.fecha    = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
 
-    public Long getId() {
-        return id;
+    public Long getId()            { return id; }
+    public void setId(Long id)     { this.id = id; }
+
+    public Producto getProducto()              { return producto; }
+    public void setProducto(Producto producto) { this.producto = producto; }
+
+    public Usuario getUsuario()            { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public String getTexto()           { return texto; }
+    public void setTexto(String texto) { this.texto = texto; }
+
+    public String getFecha()           { return fecha; }
+    public void setFecha(String fecha) { this.fecha = fecha; }
+
+    public String getAutor() {
+        return usuario != null ? usuario.getNombre() : "Anonimo";
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public int getProductoId() {
+        return producto != null ? producto.getId().intValue() : 0;
     }
-
-    public Producto getProducto() {
-        return producto;
-    }
-
-    public void setProducto(Producto producto) {
-        this.producto = producto;
-    }
-
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
-    public String getContenido() {
-        return contenido;
-    }
-
-    public void setContenido(String contenido) {
-        this.contenido = contenido;
-    }
-
-    public LocalDateTime getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(LocalDateTime fecha) {
-        this.fecha = fecha;
-    }
-
 }

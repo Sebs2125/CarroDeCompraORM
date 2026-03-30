@@ -1,25 +1,38 @@
 package org.example;
 
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
 public class Producto
 {
-    private static int cont = 0;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
 
-    private int id;
+    private Long id;
     private String nombre;
+
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
+
     private Double precio;
     private int inventario;
-    private String imagenBase64;
+
+    @OneToMany (mappedBy = "producto", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<ProductoImagen> imagenes = new ArrayList<>();
+
+    @OneToMany (mappedBy = "producto", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Comentario> comentarios = new ArrayList<>();
 
     public Producto()
     {
-        this.id = ++cont;
         this.precio = 0d;
     }
 
     public Producto( String nombre, Double precio, int inventario )
     {
-        this.id = ++cont;
         this.nombre = nombre;
         this.precio = precio;
         this.inventario = inventario;
@@ -27,18 +40,20 @@ public class Producto
 
     public Producto( String nombre, String descripcion, Double precio, int inventario )
     {
-        this.id = ++cont;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.precio = precio;
         this.inventario = inventario;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public void agregarImagen( ProductoImagen imagen )
+    {
+        imagenes.add(imagen);
+        imagen.setProducto(this);
+    }
 
-    public static int getCont() { return cont; }
-    public static void setCont(int cont) { Producto.cont = cont; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
@@ -52,6 +67,25 @@ public class Producto
     public int getInventario() { return inventario; }
     public void setInventario(int inventario) { this.inventario = inventario; }
 
-    public String getImagenBase64() { return imagenBase64; }
-    public void setImagenBase64(String imagenBase64) { this.imagenBase64 = imagenBase64; }
+    public List<ProductoImagen> getImagenes() {
+        return imagenes;
+    }
+
+    public void setImagenes(List<ProductoImagen> imagenes) {
+        this.imagenes = imagenes;
+    }
+
+    public List<Comentario> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(List<Comentario> comentarios) {
+        this.comentarios = comentarios;
+    }
+
+    public String getImagenBase64()
+    {
+        return imagenes.isEmpty() ? null : imagenes.get(0).getBase64();
+    }
+
 }

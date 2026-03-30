@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${producto.nombre} + ' - Tienda'">Producto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .comment-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            background: #fff;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .comment-card.removing {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        #wsIndicator {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar mb-4 border-bottom pb-2">
+    <a class="navbar-brand fw-bold fs-4" href="/productos">Carrito Compra</a>
+    <div class="d-flex align-items-center gap-3">
+        <a href="/productos" class="text-decoration-none">Comprar</a>
+        <a href="/ventas" class="text-decoration-none">Ventas</a>
+        <a th:if="${usuario != null && usuario.confirmarAdmin}" href="/admin" class="text-decoration-none">Admin</a>
+        <a th:if="${usuario == null}" href="/login" class="text-decoration-none text-primary fw-bold">Iniciar Sesion</a>
+        <span th:if="${usuario != null}" class="text-muted" th:text="${usuario.nombre}"></span>
+        <a href="/carrito" th:if="${usuario != null}" class="btn btn-outline-primary btn-sm">Carrito</a>
+        <a href="/logout"  th:if="${usuario != null}" class="text-decoration-none text-danger fw-bold">Salir</a>
+        <span class="badge bg-primary ms-2">
+            <span id="onlineCount">-</span> en linea
+        </span>
+        <span id="wsIndicator" class="badge bg-secondary">Conectando...</span>
+    </div>
+</nav>
+
+<!-- Detalle del producto -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <img th:if="${producto.imagenBase64 != null}"
+             th:src="'data:image/jpeg;base64,' + ${producto.imagenBase64}"
+             class="img-fluid rounded shadow-sm" alt="Imagen producto">
+    </div>
+    <div class="col-md-9">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/productos">Productos</a></li>
+                <li class="breadcrumb-item active" th:text="${producto.nombre}"></li>
+            </ol>
+        </nav>
+        <h2 th:text="${producto.nombre}">Nombre</h2>
+        <p class="text-muted" th:if="${producto.descripcion != null}" th:text="${producto.descripcion}"></p>
+        <p class="fs-4 text-primary fw-bold">RD$ <span th:text="${producto.precio}">0</span></p>
+        <p>Stock disponible: <span class="badge bg-secondary" th:text="${producto.inventario}">0</span></p>
+
+        <form action="/carrito/add" method="post" class="d-flex gap-2 mb-4">
+            <input type="hidden" name="productoId" th:value="${producto.id}">
+            <input type="number" name="cantidad" value="1" min="1" class="form-control w-25">
+            <button type="submit" class="btn btn-success" th:if="${usuario != null}">Agregar al carrito</button>
+            <a href="/login" class="btn btn-outline-primary" th:if="${usuario == null}">Inicia sesion para comprar</a>
+        </form>
+    </div>
+</div>
+
+<!-- Seccion de comentarios -->
+<div class="col-md-8">
+    <h4 class="mb-3">Comentarios
+        <small class="text-muted fs-6" id="wsCommentStatus"></small>
+    </h4>
+
+    <div id="commentsContainer">
+        <p th:if="${#lists.isEmpty(comentarios)}" class="text-muted" id="emptyMsg">
+            Aun no hay comentarios para este producto.
+        </p>
+
+        <div th:each="c : ${comentarios}"
+             th:id="'comment-' + ${c.id}"
+             class="comment-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="fw-bold" th:text="${c.autor}">Autor</span>
+                    <span class="text-muted ms-2" style="font-size:0.8rem;" th:text="${c.fecha}">Fecha</span>
+                    <p class="mb-0 mt-1" th:text="${c.texto}">Texto</p>
+                </div>
+                <form th:if="${usuario != null && usuario.confirmarAdmin}"
+                      th:action="'/admin/comentarios/' + ${c.id} + '/delete'"
+                      method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm ms-2"
+                            onclick="return confirm('Eliminar este comentario?')">
+                        Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario nuevo comentario -->
+    <div th:if="${usuario != null}" class="mt-3">
+        <h6>Dejar un comentario</h6>
+        <form th:action="'/productos/' + ${producto.id} + '/comentarios'" method="post">
+            <div class="mb-2">
+                <textarea name="texto" class="form-control" rows="3"
+                          placeholder="Escribe tu comentario..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Publicar comentario</button>
+        </form>
+    </div>
+    <div th:if="${usuario == null}" class="mt-3">
+        <a href="/login" class="btn btn-outline-primary btn-sm">Inicia sesion para comentar</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    var PRODUCT_ID = /*[[${producto.id}]]*/ 0;
+    var USERNAME   = /*[[${usuario != null ? usuario.nombre : ''}]]*/ '';
+    var IS_ADMIN   = /*[[${usuario != null && usuario.confirmarAdmin}]]*/ false;
+
+    var wsComments;
+    function connectCommentsWS() {
+        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsComments = new WebSocket(proto + '//' + location.host + '/ws/comments/' + PRODUCT_ID);
+
+        wsComments.onopen = function() {
+            document.getElementById('wsIndicator').textContent     = 'Tiempo real';
+            document.getElementById('wsIndicator').className       = 'badge bg-success';
+            document.getElementById('wsCommentStatus').textContent = '(tiempo real activo)';
+        };
+
+        wsComments.onmessage = function(event) {
+            try {
+                var msg = JSON.parse(event.data);
+                if (msg.type === 'comment_deleted') {
+                    handleCommentDeleted(msg.commentId);
+                } else if (msg.type === 'comment_added') {
+                    handleCommentAdded(msg);
+                }
+            } catch(e) { console.error('WS comments parse error:', e); }
+        };
+
+        wsComments.onclose = function() {
+            document.getElementById('wsCommentStatus').textContent = '(reconectando...)';
+            setTimeout(connectCommentsWS, 3000);
+        };
+
+        wsComments.onerror = function(err) {
+            console.error('WS comments error:', err);
+        };
+    }
+
+    function handleCommentDeleted(commentId) {
+        var el = document.getElementById('comment-' + commentId);
+        if (!el) return;
+        el.classList.add('removing');
+        setTimeout(function() {
+            el.remove();
+            var container = document.getElementById('commentsContainer');
+            var remaining = container.querySelectorAll('.comment-card');
+            if (remaining.length === 0) {
+                var p = document.createElement('p');
+                p.id        = 'emptyMsg';
+                p.className = 'text-muted';
+                p.textContent = 'Aun no hay comentarios para este producto.';
+                container.appendChild(p);
+            }
+        }, 400);
+    }
+
+    function handleCommentAdded(msg) {
+        var emptyMsg = document.getElementById('emptyMsg');
+        if (emptyMsg) emptyMsg.remove();
+
+        var container = document.getElementById('commentsContainer');
+        var div       = document.createElement('div');
+        div.id        = 'comment-' + msg.commentId;
+        div.className = 'comment-card';
+
+        var deleteBtn = '';
+        if (IS_ADMIN) {
+            deleteBtn = '<form action="/admin/comentarios/' + msg.commentId + '/delete" method="post" style="display:inline;">' +
+                '<button type="submit" class="btn btn-danger btn-sm ms-2" onclick="return confirm(\'Eliminar este comentario?\')">Eliminar</button>' +
+                '</form>';
+        }
+
+        div.innerHTML =
+            '<div class="d-flex justify-content-between align-items-start">' +
+            '<div><span class="fw-bold">' + escapeHtml(msg.autor) + '</span>' +
+            '<span class="text-muted ms-2" style="font-size:0.8rem;">' + escapeHtml(msg.fecha) + '</span>' +
+            '<p class="mb-0 mt-1">' + escapeHtml(msg.texto) + '</p></div>' +
+            deleteBtn + '</div>';
+
+        container.appendChild(div);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    var wsUsers;
+    function connectUsersWS() {
+        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUsers = new WebSocket(proto + '//' + location.host + '/ws/users');
+        wsUsers.onopen = function() {
+            if (USERNAME) {
+                wsUsers.send(JSON.stringify({ action: 'login', username: USERNAME }));
+            }
+        };
+        wsUsers.onmessage = function(event) {
+            try {
+                var msg = JSON.parse(event.data);
+                if (msg.type === 'user_count') {
+                    document.getElementById('onlineCount').textContent = msg.count;
+                }
+            } catch(e) {}
+        };
+        wsUsers.onclose = function() {
+            setTimeout(connectUsersWS, 3000);
+        };
+    }
+
+    connectCommentsWS();
+    connectUsersWS();
+
+    window.addEventListener('beforeunload', function() {
+        if (wsUsers && wsUsers.readyState === WebSocket.OPEN) {
+            wsUsers.send(JSON.stringify({ action: 'logout' }));
+        }
+    });
+</script>
+</body>
+</html>
